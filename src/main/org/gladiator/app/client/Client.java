@@ -71,7 +71,7 @@ public final class Client implements AutoCloseable {
         chat.prettyPrint("Connection Established with " + serverName);
 
         System.out.println("Type `quit` to exit");
-        CompletableFuture.anyOf(receiveMessages(reader), sendMessages(writer)).join();
+        CompletableFuture.allOf(receiveMessages(reader), sendMessages(writer)).join();
         reconnectPrompt();
     }
 
@@ -90,8 +90,10 @@ public final class Client implements AutoCloseable {
                     });
             } catch (UncheckedIOException e) {
                 LOGGER.debug("The connection with the server has ended");
+            } finally {
+                executor.shutdownNow();
             }
-        });
+        }, executor);
     }
 
     private CompletableFuture<Void> sendMessages(PrintWriter writer) {
@@ -112,8 +114,10 @@ public final class Client implements AutoCloseable {
                 } catch (IOException ex) {
                     LOGGER.error("Error during socket closing after shutdown of sending message: {}", e, e);
                 }
+            } finally {
+                executor.shutdownNow();
             }
-        });
+        }, executor);
     }
 
     private String exchangeNames(PrintWriter writer, BufferedReader reader) {

@@ -16,5 +16,3 @@ Get-ChildItem -Path $targetDirectory -Recurse -Include "*.exe", "*.jar" | ForEac
     Add-Content -Path $hashFile -Value "- $fileName"
     Add-Content -Path $hashFile -Value "    - $( $hash.Hash )"
 }
-
-Write-Host "Hashes have been written to $hashFile"
