@@ -1,8 +1,5 @@
-# JMessenger
-
-<div style="text-align: center;">
-    <img src="src/main/resources/images/command.png" alt="command"/>
-</div>
+<p align="center"><img src="src/main/resources/images/command.png" alt="command"></p>
+<h1 align="center">JMessenger</h1>
 
 **JMessenger** is a terminal-based chat application that allows you to communicate seamlessly with others over a
 network. It supports both client and server functionalities, making it easy to set up and use.
