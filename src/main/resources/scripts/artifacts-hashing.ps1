@@ -1,5 +1,5 @@
-$targetDirectory = "../../../../target/artifacts"
-$hashFile = "../../../../target/artifacts/artifacts-hashes.txt"
+$targetDirectory = "target/artifacts"
+$hashFile = "target/artifacts/artifacts-hashes.txt"
 
 # Clear or create the hash file
 if (Test-Path $hashFile)
@@ -8,6 +8,7 @@ if (Test-Path $hashFile)
 }
 New-Item -Path $hashFile -ItemType File -Force | Out-Null
 
+Write-Host
 # Loop through each .exe file, calculate its hash, and append to the hash file
 Get-ChildItem -Path $targetDirectory -Recurse -Include "*.exe", "*.jar" | ForEach-Object {
     $fileName = $_.Name
@@ -15,3 +16,5 @@ Get-ChildItem -Path $targetDirectory -Recurse -Include "*.exe", "*.jar" | ForEac
     Add-Content -Path $hashFile -Value "- $fileName"
     Add-Content -Path $hashFile -Value "    - $( $hash.Hash )"
 }
+
+Write-Host "Hashes have been written to $hashFile"
