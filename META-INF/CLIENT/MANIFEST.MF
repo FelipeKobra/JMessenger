@@ -1,2 +1,2 @@
 Manifest-Version: 1.0
-Main-Class: main.client.ClientMain
+Main-Class: app.client.ClientMain

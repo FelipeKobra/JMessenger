@@ -1,29 +1,31 @@
-package main.chat;
+package app.util;
 
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.logging.Logger;
 
-public class DefaultTerminal implements CustomTerminal {
-    public final Logger logger = Logger.getLogger(getClass().getName());
+public class SingletonTerminal implements AutoCloseable {
+    public static final SingletonTerminal TERMINAL = new SingletonTerminal();
+    public static final Logger LOGGER = LoggerFactory.getLogger(SingletonTerminal.class);
+
     private final Terminal terminal;
     private final LineReader lineReader;
 
-    public DefaultTerminal() {
+    private SingletonTerminal() {
         Terminal tempTerminal = null;
         LineReader tempLineReader = null;
         try {
             tempTerminal = TerminalBuilder.terminal();
-            tempLineReader = LineReaderBuilder.builder().terminal(tempTerminal).variable(LineReader.DISABLE_HISTORY, Boolean.TRUE).build();
+            tempLineReader = LineReaderBuilder.builder().terminal(tempTerminal).variable(LineReader.DISABLE_HISTORY, true).build();
         } catch (IOException e) {
-            logger.warning("Error creating client terminal: " + e);
+            LOGGER.error("Error creating client terminal: {}", e.getMessage(), e);
         }
-
 
         Objects.requireNonNull(tempTerminal);
         tempTerminal.enterRawMode();
@@ -40,8 +42,11 @@ public class DefaultTerminal implements CustomTerminal {
         return lineReader;
     }
 
-    @Override
-    public void close() throws IOException {
-        terminal.close();
+    public void close() {
+        try {
+            terminal.close();
+        } catch (IOException e) {
+            LOGGER.error("Error closing terminal: {}", e.getMessage(), e);
+        }
     }
 }

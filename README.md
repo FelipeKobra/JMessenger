@@ -1,33 +1,114 @@
-# Installation
-1. Open the project folder with your terminal
-3. Execute `./mvnw install`
+# JMessenger
 
-# Executing
+<div style="text-align: center;">
+    <img src="src/main/resources/images/command.png" alt="command"/>
+</div>
 
-## Executable
-Run the executable (`.exe`) , that is on the [Releases](https://github.com/FelipeKobra/JavaTerminalChat/releases) section, on your console `./ChatClient` or `./CharServer`
+**JMessenger** is a terminal-based chat application that allows you to communicate seamlessly with others over a
+network. It supports both client and server functionalities, making it easy to set up and use.
 
-## Source Code
+## Table of Contents
 
-### Explanation
-There are two main classes:
-1. ClientMain (`main.client.ClientMain`)
-2. ServerMain (`main.server.ServerMain`)
+- [Notes](#notes)
+- [Installation](#installation)
+- [Usage](#usage)
+    - [Windows Executable](#windows-executable)
+    - [JAR](#jar)
+- [Building](#building)
+    - [Project](#project)
+    - [Artifacts](#artifacts)
+- [Requirements for Developers](#requirements-for-developers)
+- [Contributing](#contributing)
+- [License](#license)
 
-First, you need to execute the `ServerMain`, so it can redistribute and send the messages to other clients, then you can execute the `ClientMain`, to communicate with others in the same chat
+## Notes
 
-### Examples
-``` bash
-java -cp "C:\Users\{yourUser}\IdeaProjects\JavaConsoleChat\target\classes;C:\Users\{yourUser}\.m2\repository\org\apache\commons\commons-lang3\3.17.0\commons-lang3-3.17.0.jar;C:\Users\{yourUser}\.m2\repository\org\fusesource\jansi\jansi\2.4.1\jansi-2.4.1.jar;C:\Users\{yourUser}\.m2\repository\org\jline\jline\3.24.1\jline-3.24.1.jar" main.client.ClientMain
+- You don't need to forward ports on your router if UPnP (Universal Plug and Play) is enabled. This allows the
+  application to automatically configure the router for communication.
+
+## Installation
+
+1. Open the project folder with your terminal.
+2. Execute the following command to install dependencies:
+
+```bash
+   ./mvnw install
 ```
 
-``` bash
-java -cp "C:\Users\{yourUser}\IdeaProjects\JavaConsoleChat\target\classes;C:\Users\{yourUser}\.m2\repository\org\apache\commons\commons-lang3\3.17.0\commons-lang3-3.17.0.jar;C:\Users\{yourUser}\.m2\repository\org\fusesource\jansi\jansi\2.4.1\jansi-2.4.1.jar;C:\Users\{yourUser}\.m2\repository\org\jline\jline\3.24.1\jline-3.24.1.jar" main.server.ServerMain
-```
+## Usage
 
-# Using
-1. Have a `ChatServer` running
-2. Open a `ChatClient` and add the required IP of the computer running the server when prompted, if it is running locally, you can just leave it empty or enter `localhost`
+### Windows Executable
 
-# Requirements for Developers
-JDK 21 or higher
+Download the executable (`.exe`) from the [Releases](https://github.com/FelipeKobra/JavaTerminalChat/releases) section.
+Use the following commands in your console:
+
+- For the Chat Server:
+  ```bash
+    ./Server.exe
+  ```
+- For the Chat Client:
+    ```bash
+    ./Client.exe
+    ```
+
+### JAR
+
+Download the JAR (`.jar`) from the [Releases](https://github.com/FelipeKobra/JavaTerminalChat/releases) section. Use the
+following commands in your console:
+
+- For the Chat Server:
+    ```bash
+    java -jar Server.jar
+    ```
+- For the Chat Client:
+    ```bash
+  java -jar Client.jar
+    ```
+
+### Source Code
+
+#### Explanation
+
+There are two main application classes:
+
+1. **ClientMain** (`app.client.ClientMain`): Handles client-side operations, allowing users to send and receive
+   messages.
+2. **ServerMain** (`app.server.ServerMain`): Manages server-side operations, redistributing messages to connected
+   clients.
+
+#### Example
+
+1. Start the `ChatServer` by running the `ServerMain` class.
+2. Open a new terminal and start a `ChatClient` instance. When prompted, enter the IP address of the computer running
+   the server. If the server is running locally, you can leave it empty or enter `localhost`.
+
+## Building
+
+### Project
+
+To build this project, run the following command in the root folder:
+
+   ```bash
+    .\mvnw clean install
+   ```
+
+### Artifacts
+
+To build the artifacts, run this command in the root folder:
+
+   ```bash
+    .\mvnw clean package
+   ```
+
+## Requirements for Developers
+
+- JDK 21 or higher
+
+## Contributing
+
+If you would like to contribute to JMessenger, please fork the repository and submit a pull request. For major changes,
+please open an issue first to discuss what you would like to change.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

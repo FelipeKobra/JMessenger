@@ -1,4 +1,7 @@
-package main.connection;
+package app.util;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,10 +11,9 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.logging.Logger;
 
 public final class AsyncSocketIO {
-    private static final Logger logger = Logger.getLogger(AsyncSocketIO.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(AsyncSocketIO.class.getName());
     private final InputStream inputStream;
     private final OutputStream outputStream;
 
@@ -35,10 +37,10 @@ public final class AsyncSocketIO {
                 clientInputStreamFuture.get(),
                 clientOutputStreamFuture.get());
         } catch (InterruptedException e) {
-            logger.warning("The current thread was interrupted while waiting: " + e);
+            LOGGER.error("The current thread was interrupted while waiting: {}", e, e);
             Thread.currentThread().interrupt();
         } catch (ExecutionException e) {
-            logger.fine("this future completed exceptionally: " + e);
+            LOGGER.debug("this future completed exceptionally: {}", String.valueOf(e));
         }
 
         return asyncSocketIO;
@@ -49,7 +51,7 @@ public final class AsyncSocketIO {
         try {
             clientInputStream = clientSocket.getInputStream();
         } catch (IOException e) {
-            logger.finer("Input Stream closed: " + e);
+            LOGGER.debug("Input Stream closed: {}", String.valueOf(e));
         }
         return clientInputStream;
     }
@@ -59,7 +61,7 @@ public final class AsyncSocketIO {
         try {
             clientOutputStream = clientSocket.getOutputStream();
         } catch (IOException e) {
-            logger.finer("Output Stream closed: " + e);
+            LOGGER.debug("Output Stream closed: {}", String.valueOf(e));
         }
         return clientOutputStream;
     }
