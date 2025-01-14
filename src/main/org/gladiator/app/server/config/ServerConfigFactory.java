@@ -5,12 +5,11 @@ import app.util.SingletonTerminal;
 import environment.Port;
 import org.apache.commons.lang3.Validate;
 import org.jline.reader.LineReader;
-import org.jline.reader.UserInterruptException;
 
 
 public class ServerConfigFactory {
 
-    public ServerConfig create() throws UserInterruptException {
+    public ServerConfig create() {
         ServerConfig serverConfig;
         String isCustom;
 

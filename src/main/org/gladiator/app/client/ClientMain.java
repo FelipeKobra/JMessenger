@@ -13,6 +13,7 @@ public final class ClientMain {
             try (Client client = Client.createClient(isRunning)) {
                 client.run();
             } catch (UserInterruptException e) {
+                isRunning.set(false);
                 Server.getLogger().debug("User didn't finished typing during a line read, probably by pressing CTRL+C", e);
             }
         }

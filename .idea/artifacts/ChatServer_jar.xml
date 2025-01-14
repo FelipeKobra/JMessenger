@@ -3,7 +3,7 @@
     <output-path>$PROJECT_DIR$/out/artifacts/ChatServer_jar</output-path>
     <root id="archive" name="ChatServer.jar">
       <element id="directory" name="META-INF">
-        <element id="file-copy" path="$PROJECT_DIR$/META-INF/SERVER/MANIFEST.MF" />
+        <element id="file-copy" path="$PROJECT_DIR$/META-INF/artifacts/server/MANIFEST.MF" />
         <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
       </element>
       <element id="module-output" name="JMessenger" />

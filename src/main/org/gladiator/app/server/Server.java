@@ -26,21 +26,22 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 public final class Server implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Server.class.getName());
+    private final List<Connection> clientConnections = new CopyOnWriteArrayList<>();
+    private final AtomicBoolean isClosingManually = new AtomicBoolean(false);
 
-    private final List<Connection> clientConnections;
     private final ServerConfig serverConfig;
     private final ServerSocket serverSocket;
     private final ExecutorService executor;
     private final Chat chat;
     private final PortMapper portMapper;
 
-    private Server(List<Connection> clientConnections, ServerConfig serverConfig,
-                   ServerSocket serverSocket, ExecutorService executor, Chat chat, PortMapper portMapper) {
-        this.clientConnections = clientConnections;
+    private Server(ServerConfig serverConfig, ServerSocket serverSocket,
+                   ExecutorService executor, Chat chat, PortMapper portMapper) {
         this.serverConfig = serverConfig;
         this.serverSocket = serverSocket;
         this.executor = executor;
@@ -55,7 +56,6 @@ public final class Server implements AutoCloseable {
     public static Server createServer() throws UserInterruptException {
         Server server = null;
         try {
-            List<Connection> clientConnections = new CopyOnWriteArrayList<>();
             ServerConfig serverConfig = new ServerConfigFactory().create();
             ServerSocket serverSocket = ServerSocketFactory.getDefault().createServerSocket(serverConfig.port());
             ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
@@ -64,7 +64,7 @@ public final class Server implements AutoCloseable {
             PortMapper portMapper = PortMapper.createDefault();
             portMapper.openPort(serverConfig.port());
 
-            server = new Server(clientConnections, serverConfig, serverSocket, executor, chat, portMapper);
+            server = new Server(serverConfig, serverSocket, executor, chat, portMapper);
         } catch (BindException e) {
             LOGGER.error("Address already in use, check if you have another server opened in the same port");
         } catch (IOException e) {
@@ -91,7 +91,7 @@ public final class Server implements AutoCloseable {
 
                     final AsyncSocketIO asyncSocketIO = AsyncSocketIO.getAsyncSocketIO(clientSocket, executor);
 
-                    final var reader = new BufferedReader(new InputStreamReader(asyncSocketIO.getInputStream()));
+                    final var reader = new BufferedReader(new InputStreamReader(asyncSocketIO.getInputStream(), StandardCharsets.UTF_8));
                     final var writer = new PrintWriter(asyncSocketIO.getOutputStream(), true, StandardCharsets.UTF_8);
 
                     String clientName = exchangeNames(writer, reader);
@@ -113,7 +113,7 @@ public final class Server implements AutoCloseable {
 
     private CompletableFuture<Void> broadcastToConnections() {
         LOGGER.info("Broadcasting to connections...");
-        
+
         System.out.println("Type `quit` to exit");
         return CompletableFuture.runAsync(() -> {
             String line;
@@ -145,10 +145,7 @@ public final class Server implements AutoCloseable {
         executor.execute(() -> {
             try {
                 reader.lines()
-                    .map(msg -> {
-                        msg = new String(msg.getBytes(), StandardCharsets.UTF_8);
-                        return ConnectionMessage.fromRawString(msg);
-                    })
+                    .map(ConnectionMessage::fromRawString)
                     .forEach(msg -> {
                         chat.showConnectionMessage(msg);
                         chat.showBufferedMessage(SingletonTerminal.TERMINAL.getLineReader().getBuffer().toString());
@@ -162,10 +159,12 @@ public final class Server implements AutoCloseable {
             } catch (UncheckedIOException ignored) {
                 LOGGER.debug("Connection with {} ended abruptly", clientConnection.name());
             } finally {
-                LOGGER.info("User Disconnected: {}", clientConnection.name());
-                chat.showBufferedMessage(SingletonTerminal.TERMINAL.getLineReader().getBuffer().toString());
-                clientConnection.close();
-                clientConnections.remove(clientConnection);
+                if (!isClosingManually.get()) {
+                    LOGGER.info("User Disconnected: {}", clientConnection.name());
+                    chat.showBufferedMessage(SingletonTerminal.TERMINAL.getLineReader().getBuffer().toString());
+                    clientConnection.close();
+                    clientConnections.remove(clientConnection);
+                }
             }
         });
     }
@@ -203,6 +202,8 @@ public final class Server implements AutoCloseable {
     @Override
     public void close() throws IOException {
         LOGGER.info("Closing all connections...");
+
+        isClosingManually.set(true);
         final var futures = clientConnections.stream().map(connection ->
             CompletableFuture.runAsync(connection::close)).toArray(CompletableFuture[]::new);
         CompletableFuture.allOf(futures).join();

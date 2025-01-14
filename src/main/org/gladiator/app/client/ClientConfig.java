@@ -3,7 +3,6 @@ package app.client;
 import app.util.SingletonTerminal;
 import environment.Port;
 import org.apache.commons.lang3.Validate;
-import org.jline.reader.UserInterruptException;
 
 public class ClientConfig {
     private final String name;
@@ -24,7 +23,7 @@ public class ClientConfig {
         return new ClientConfig(clientName, serverAddress, serverPort);
     }
 
-    private static String receiveName() throws UserInterruptException {
+    private static String receiveName() {
         String name = "";
         while (name.isBlank()) {
             name = SingletonTerminal.TERMINAL.getLineReader().readLine("Choose your name: ");
@@ -32,11 +31,11 @@ public class ClientConfig {
         return name;
     }
 
-    private static String receiveAddress() throws UserInterruptException {
+    private static String receiveAddress() {
         return SingletonTerminal.TERMINAL.getLineReader().readLine("Type the Server IP (default = localhost): ");
     }
 
-    private static int receivePort() throws UserInterruptException {
+    private static int receivePort() {
         int serverPort;
         try {
             String serverPortString = SingletonTerminal.TERMINAL.getLineReader().readLine("Type the server port  (default = " + Port.PORT_DEFAULT + "): ");

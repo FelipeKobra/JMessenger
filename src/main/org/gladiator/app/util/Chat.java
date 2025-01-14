@@ -9,15 +9,15 @@ public class Chat {
         this.userPrompt = userPrompt;
     }
 
-    public void cleanLine() {
-        System.out.print("\r\033[K");
-    }
-
     public void prettyPrint(String str) {
         String division = "=".repeat(str.length());
         System.out.println("\n" + division);
         System.out.println(str);
         System.out.println(division + "\n");
+    }
+
+    public void cleanLine() {
+        System.out.print("\r\033[K");
     }
 
     public void showUserPrompt() {

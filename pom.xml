@@ -16,12 +16,15 @@
         <name>org.gladiator</name>
     </organization>
 
-    <!-- App Properties -->
     <properties>
+        <!-- App Properties -->
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <artifacts.output.directory>${project.build.directory}/artifacts</artifacts.output.directory>
+        <!-- Dependency Properties -->
+        <jline.bundle.version>3.28.0</jline.bundle.version>
+        <native.maven.plugin.version>0.10.4</native.maven.plugin.version>
     </properties>
 
     <build>
@@ -88,79 +91,51 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- https://mvnrepository.com/artifact/com.akathist.maven.plugins.launch4j/launch4j-maven-plugin -->
-            <!-- Create Application Windows Executables -->
+            <!-- https://mvnrepository.com/artifact/org.graalvm.buildtools/native-maven-plugin -->
+            <!-- Create Windows Native Images -->
             <plugin>
-                <groupId>com.akathist.maven.plugins.launch4j</groupId>
-                <artifactId>launch4j-maven-plugin</artifactId>
-                <version>2.5.2</version>
+                <groupId>org.graalvm.buildtools</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+                <version>${native.maven.plugin.version}</version>
+                <extensions>false</extensions>
+                <configuration>
+                    <outputDirectory>target/artifacts</outputDirectory>
+                    <skipNativeTests>true</skipNativeTests>
+                    <fallback>false</fallback>
+                    <debug>false</debug>
+                    <verbose>false</verbose>
+                    <quickBuild>true</quickBuild>
+                    <buildArgs>
+                        -J-Dfile.encoding=UTF-8
+                    </buildArgs>
+                </configuration>
                 <executions>
-                    <!-- Server Executable -->
                     <execution>
-                        <id>executable-server-main</id>
-                        <phase>package</phase>
+                        <id>build-native-server</id>
                         <goals>
-                            <goal>launch4j</goal>
+                            <goal>compile-no-fork</goal>
                         </goals>
+                        <phase>package</phase>
                         <configuration>
-                            <icon>src/main/resources/images/server.ico</icon>
-                            <headerType>console</headerType>
-                            <outfile>${artifacts.output.directory}/Server.exe</outfile>
-                            <jar>${artifacts.output.directory}/Server.jar</jar>
-                            <errTitle>${project.artifactId}</errTitle>
-                            <jre>
-                                <path>%JAVA_HOME%;%PATH%</path>
-                                <requiresJdk>false</requiresJdk>
-                                <requires64Bit>false</requires64Bit>
-                            </jre>
-                            <versionInfo>
-                                <fileVersion>0.${project.version}</fileVersion>
-                                <txtFileVersion>${project.version}</txtFileVersion>
-                                <fileDescription>Server executable for ${project.artifactId}</fileDescription>
-                                <copyright>${project.groupId}</copyright>
-                                <productVersion>0.${project.version}</productVersion>
-                                <txtProductVersion>${project.version</txtProductVersion>
-                                <productName>${project.artifactId} Server</productName>
-                                <internalName>${project.artifactId} Server</internalName>
-                                <originalFilename>Server.exe</originalFilename>
-                            </versionInfo>
+                            <imageName>Server</imageName>
+                            <mainClass>app.server.ServerMain</mainClass>
                         </configuration>
                     </execution>
-                    <!-- Client Executable -->
                     <execution>
-                        <id>executable-client-main</id>
-                        <phase>package</phase>
+                        <id>build-native-client</id>
                         <goals>
-                            <goal>launch4j</goal>
+                            <goal>compile-no-fork</goal>
                         </goals>
+                        <phase>package</phase>
                         <configuration>
-                            <icon>src/main/resources/images/client.ico</icon>
-                            <headerType>console</headerType>
-                            <outfile>${artifacts.output.directory}/Client.exe</outfile>
-                            <jar>${artifacts.output.directory}/Client.jar</jar>
-                            <errTitle>${project.artifactId}</errTitle>
-                            <jre>
-                                <path>%JAVA_HOME%;%PATH%</path>
-                                <requiresJdk>false</requiresJdk>
-                                <requires64Bit>false</requires64Bit>
-                            </jre>
-                            <versionInfo>
-                                <fileVersion>0.${project.version}</fileVersion>
-                                <txtFileVersion>${project.version}</txtFileVersion>
-                                <fileDescription>Client executable for ${project.artifactId}</fileDescription>
-                                <copyright>${project.groupId}</copyright>
-                                <productVersion>0.${project.version}</productVersion>
-                                <txtProductVersion>${project.version</txtProductVersion>
-                                <productName>${project.artifactId} Client</productName>
-                                <internalName>${project.artifactId} Client</internalName>
-                                <originalFilename>Client.exe</originalFilename>
-                            </versionInfo>
+                            <imageName>Client</imageName>
+                            <mainClass>app.client.ClientMain</mainClass>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
             <!-- https://mvnrepository.com/artifact/org.codehaus.mojo/exec-maven-plugin -->
-            <!-- Create Artifacts SHA-256 Hashes -->
+            <!-- Artifacts SHA-256 Hashes -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
@@ -203,17 +178,41 @@
             <version>1.0.2</version>
         </dependency>
         <!-- Terminal Section -->
-        <!-- https://mvnrepository.com/artifact/org.fusesource.jansi/jansi -->
-        <dependency>
-            <groupId>org.fusesource.jansi</groupId>
-            <artifactId>jansi</artifactId>
-            <version>2.4.1</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.jline/jline -->
+        <!-- https://mvnrepository.com/artifact/org.jline/jline-terminal -->
         <dependency>
             <groupId>org.jline</groupId>
-            <artifactId>jline</artifactId>
-            <version>3.28.0</version>
+            <artifactId>jline-terminal</artifactId>
+            <version>${jline.bundle.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.jline/jline-terminal-jni -->
+        <dependency>
+            <groupId>org.jline</groupId>
+            <artifactId>jline-terminal-jni</artifactId>
+            <version>${jline.bundle.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.jline/jline-native -->
+        <dependency>
+            <groupId>org.jline</groupId>
+            <artifactId>jline-native</artifactId>
+            <version>${jline.bundle.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.jline/jline-console -->
+        <dependency>
+            <groupId>org.jline</groupId>
+            <artifactId>jline-console</artifactId>
+            <version>${jline.bundle.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.jline/jline-style -->
+        <dependency>
+            <groupId>org.jline</groupId>
+            <artifactId>jline-style</artifactId>
+            <version>${jline.bundle.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.jline/jline-reader -->
+        <dependency>
+            <groupId>org.jline</groupId>
+            <artifactId>jline-reader</artifactId>
+            <version>${jline.bundle.version}</version>
         </dependency>
         <!-- Logging Section -->
         <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->

@@ -63,7 +63,7 @@ public final class Client implements AutoCloseable {
     public void run() {
         final AsyncSocketIO socketIO = AsyncSocketIO.getAsyncSocketIO(socket, executor);
 
-        final var reader = new BufferedReader(new InputStreamReader(socketIO.getInputStream()));
+        final var reader = new BufferedReader(new InputStreamReader(socketIO.getInputStream(), StandardCharsets.UTF_8));
         final var writer = new PrintWriter(socketIO.getOutputStream(), true, StandardCharsets.UTF_8);
 
         String serverName = exchangeNames(writer, reader);
@@ -79,10 +79,7 @@ public final class Client implements AutoCloseable {
         return CompletableFuture.runAsync(() -> {
             try {
                 reader.lines()
-                    .map(msg -> {
-                        msg = new String(msg.getBytes(), StandardCharsets.UTF_8);
-                        return ConnectionMessage.fromRawString(msg);
-                    })
+                    .map(ConnectionMessage::fromRawString)
                     .forEach(msg -> {
                         chat.showConnectionMessage(msg);
                         chat.showUserPrompt();
@@ -102,18 +99,13 @@ public final class Client implements AutoCloseable {
             try {
                 while ((line = SingletonTerminal.TERMINAL.getLineReader().readLine(chat.userPrompt() + " ")) != null) {
                     if (line.equals("quit")) {
-                        throw new UserInterruptException("User typed `quit`");
+                        break;
                     }
                     String msg = ConnectionMessage.toRawString(config.getName(), line);
                     writer.println(msg);
                 }
             } catch (EndOfFileException | UserInterruptException e) {
-                LOGGER.debug("User stopped the console reading, probably by pressing CTRL + C");
-                try {
-                    socket.close();
-                } catch (IOException ex) {
-                    LOGGER.error("Error during socket closing after shutdown of sending message: {}", e, e);
-                }
+                LOGGER.debug("User stopped the console reading, probably by pressing CTRL + C", e);
             } finally {
                 executor.shutdownNow();
             }
@@ -150,12 +142,11 @@ public final class Client implements AutoCloseable {
         try {
             String choice = SingletonTerminal.TERMINAL.getLineReader().readLine("Connect to another server? y/N: ");
             if (!choice.equalsIgnoreCase("Y")) {
-                chat.prettyPrint("Chat Ended");
-                isRunning.set(false);
+                throw new UserInterruptException("Reconnection choice not made");
             }
-
         } catch (UserInterruptException | EndOfFileException e) {
-            LOGGER.debug("Reconnection choice not made: {}", e.getMessage());
+            isRunning.set(false);
+            chat.prettyPrint("Chat Ended");
         }
     }
 

@@ -1,5 +1,18 @@
 # Change Log
 
+## [0.0.3](https://github.com/FelipeKobra/JMessenger/tree/v0.0.3) - To Release
+
+### Enhancements
+
+- Use GraalVM instead of Launch4j for creating Windows native images. Launch4j made necessary for the user to have JRE
+- Added JLine in bundles for better compatibility with the native image build
+- Change Deprecated JLine Jansi to JNI Version
+
+### Bug Fixes
+
+- Fixed showing terminal buffered messages a lot of times on closing the server
+- No more Exceptions when exiting of the application via `CTRL + C`
+
 ## [0.0.2](https://github.com/FelipeKobra/JMessenger/tree/v0.0.2) - January 12, 2025
 
 ### Enhancements
