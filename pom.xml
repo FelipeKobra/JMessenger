@@ -1,238 +1,278 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <artifactId>JMessenger</artifactId>
 
-    <!-- Basic Config -->
-    <groupId>org.gladiator</groupId>
-    <artifactId>JMessenger</artifactId>
-    <version>0.0.2</version>
 
-    <!-- Organization Config -->
-    <description>Robust and efficient chat designed for terminal-based communication</description>
-    <inceptionYear>2025</inceptionYear>
-    <organization>
-        <name>org.gladiator</name>
-    </organization>
+  <build>
+    <plugins>
+      <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-checkstyle-plugin -->
+      <!-- Check Code Style-->
+      <plugin>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <configuration>
+          <configLocation>google_checks.xml</configLocation>
+          <consoleOutput>false</consoleOutput>
+          <failsOnError>true</failsOnError>
+          <includeTestSourceDirectory>true</includeTestSourceDirectory>
+          <linkXRef>false</linkXRef>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <id>validate</id>
+            <phase>validate</phase>
+          </execution>
+        </executions>
+        <groupId>org.apache.maven.plugins</groupId>
+        <version>3.6.0</version>
+      </plugin>
+      <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-shade-plugin -->
+      <!-- Create Application Jars -->
+      <plugin>
+        <artifactId>maven-shade-plugin</artifactId>
+        <configuration>
+          <filters>
+            <filter>
+              <artifact>*:*</artifact>
+              <excludes>
+                <exclude>module-info.class</exclude>
+                <exclude>META-INF/*.SF</exclude>
+                <exclude>META-INF/*.DSA</exclude>
+                <exclude>META-INF/*.RSA</exclude>
+                <exclude>META-INF/LICENSE.txt</exclude>
+                <exclude>META-INF/MANIFEST.MF</exclude>
+                <exclude>META-INF/versions/9/module-info.class</exclude>
+              </excludes>
+            </filter>
+          </filters>
+        </configuration>
+        <executions>
+          <!-- Server JAR-->
+          <execution>
+            <configuration>
+              <finalName>Server</finalName>
+              <outputDirectory>${artifacts.output.directory}</outputDirectory>
+              <transformers>
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>app.server.ServerMain</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <id>shade-server-main</id>
+            <phase>package</phase>
+          </execution>
+          <!-- Client JAR-->
+          <execution>
+            <configuration>
+              <finalName>Client</finalName>
+              <outputDirectory>${artifacts.output.directory}</outputDirectory>
+              <transformers>
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>app.client.ClientMain</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <id>shade-client-main</id>
+            <phase>package</phase>
+          </execution>
+        </executions>
+        <groupId>org.apache.maven.plugins</groupId>
+        <version>3.6.0</version>
+      </plugin>
+      <!-- https://mvnrepository.com/artifact/org.graalvm.buildtools/native-maven-plugin -->
+      <!-- Create Windows Native Images -->
+      <plugin>
+        <artifactId>native-maven-plugin</artifactId>
+        <configuration>
+          <buildArgs>
+            ${native.build.args}
+          </buildArgs>
+          <debug>false</debug>
+          <fallback>false</fallback>
+          <outputDirectory>target/artifacts</outputDirectory>
+          <quickBuild>true</quickBuild>
+          <skipNativeTests>true</skipNativeTests>
+          <verbose>false</verbose>
+        </configuration>
+        <executions>
+          <!-- Server EXE -->
+          <execution>
+            <configuration>
+              <imageName>Server</imageName>
+              <mainClass>app.server.ServerMain</mainClass>
+            </configuration>
+            <goals>
+              <goal>compile-no-fork</goal>
+            </goals>
+            <id>build-native-server</id>
+            <phase>package</phase>
+          </execution>
+          <!-- Client EXE -->
+          <execution>
+            <configuration>
+              <imageName>Client</imageName>
+              <mainClass>app.client.ClientMain</mainClass>
+            </configuration>
+            <goals>
+              <goal>compile-no-fork</goal>
+            </goals>
+            <id>build-native-client</id>
+            <phase>package</phase>
+          </execution>
+        </executions>
+        <extensions>false</extensions>
+        <groupId>org.graalvm.buildtools</groupId>
+        <version>${native.maven.plugin.version}</version>
+      </plugin>
+      <!-- https://mvnrepository.com/artifact/org.codehaus.mojo/exec-maven-plugin -->
+      <!-- Artifacts SHA-256 Hashes -->
+      <plugin>
+        <artifactId>exec-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <configuration>
+              <arguments>
+                <argument>-NoProfile</argument>
+                <argument>-Command</argument>
+                <argument>
+                  &quot;src\main\resources\scripts\artifacts-hashing.ps1&quot;
+                </argument>
+              </arguments>
+              <executable>powershell</executable>
+            </configuration>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+        </executions>
+        <groupId>org.codehaus.mojo</groupId>
+        <version>3.5.0</version>
+      </plugin>
+    </plugins>
+    <sourceDirectory>src/main/java/org/gladiator</sourceDirectory>
+  </build>
+  <dependencies>
+    <!-- General Section -->
+    <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+    <dependency>
+      <artifactId>commons-lang3</artifactId>
+      <groupId>org.apache.commons</groupId>
+      <version>3.17.0</version>
+    </dependency>
+    <!-- Networking Section -->
+    <!-- https://mvnrepository.com/artifact/com.sshtools/porter -->
+    <dependency>
+      <artifactId>porter</artifactId>
+      <groupId>com.sshtools</groupId>
+      <version>1.0.2</version>
+    </dependency>
+    <!-- Terminal Section -->
+    <!-- https://mvnrepository.com/artifact/org.jline/jline-terminal -->
+    <dependency>
+      <artifactId>jline-terminal</artifactId>
+      <groupId>org.jline</groupId>
+      <version>${jline.bundle.version}</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.jline/jline-terminal-jni -->
+    <dependency>
+      <artifactId>jline-terminal-jni</artifactId>
+      <groupId>org.jline</groupId>
+      <version>${jline.bundle.version}</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.jline/jline-native -->
+    <dependency>
+      <artifactId>jline-native</artifactId>
+      <groupId>org.jline</groupId>
+      <version>${jline.bundle.version}</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.jline/jline-console -->
+    <dependency>
+      <artifactId>jline-console</artifactId>
+      <groupId>org.jline</groupId>
+      <version>${jline.bundle.version}</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.jline/jline-style -->
+    <dependency>
+      <artifactId>jline-style</artifactId>
+      <groupId>org.jline</groupId>
+      <version>${jline.bundle.version}</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.jline/jline-reader -->
+    <dependency>
+      <artifactId>jline-reader</artifactId>
+      <groupId>org.jline</groupId>
+      <version>${jline.bundle.version}</version>
+    </dependency>
+    <!-- Logging Section -->
+    <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
+    <dependency>
+      <artifactId>slf4j-api</artifactId>
+      <groupId>org.slf4j</groupId>
+      <version>2.0.16</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-core -->
+    <dependency>
+      <artifactId>logback-core</artifactId>
+      <groupId>ch.qos.logback</groupId>
+      <version>1.5.16</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
+    <dependency>
+      <artifactId>logback-classic</artifactId>
+      <groupId>ch.qos.logback</groupId>
+      <version>1.5.16</version>
+    </dependency>
+  </dependencies>
+  <description>Robust and efficient chatUtils designed for terminal-based communication
+  </description>
 
-    <properties>
-        <!-- App Properties -->
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <artifacts.output.directory>${project.build.directory}/artifacts</artifacts.output.directory>
-        <!-- Dependency Properties -->
-        <jline.bundle.version>3.28.0</jline.bundle.version>
-        <native.maven.plugin.version>0.10.4</native.maven.plugin.version>
-    </properties>
+  <!-- Organization Config -->
+  <groupId>org.gladiator</groupId>
+  <inceptionYear>2025</inceptionYear>
+  <modelVersion>4.0.0</modelVersion>
+  <organization>
+    <name>org.gladiator</name>
+  </organization>
 
-    <build>
-        <sourceDirectory>src/main/org/gladiator</sourceDirectory>
-        <plugins>
-            <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-shade-plugin -->
-            <!-- Create Application Jars -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.6.0</version>
-                <configuration>
-                    <filters>
-                        <filter>
-                            <artifact>*:*</artifact>
-                            <excludes>
-                                <exclude>module-info.class</exclude>
-                                <exclude>META-INF/*.SF</exclude>
-                                <exclude>META-INF/*.DSA</exclude>
-                                <exclude>META-INF/*.RSA</exclude>
-                                <exclude>META-INF/LICENSE.txt</exclude>
-                                <exclude>META-INF/MANIFEST.MF</exclude>
-                                <exclude>META-INF/versions/9/module-info.class</exclude>
-                            </excludes>
-                        </filter>
-                    </filters>
-                </configuration>
-                <executions>
-                    <!-- Server JAR-->
-                    <execution>
-                        <id>shade-server-main</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <finalName>Server</finalName>
-                            <outputDirectory>${artifacts.output.directory}</outputDirectory>
-                            <transformers>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>app.server.ServerMain</mainClass>
-                                </transformer>
-                            </transformers>
-                        </configuration>
-                    </execution>
-                    <!-- Client JAR-->
-                    <execution>
-                        <id>shade-client-main</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <finalName>Client</finalName>
-                            <outputDirectory>${artifacts.output.directory}</outputDirectory>
-                            <transformers>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>app.client.ClientMain</mainClass>
-                                </transformer>
-                            </transformers>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- https://mvnrepository.com/artifact/org.graalvm.buildtools/native-maven-plugin -->
-            <!-- Create Windows Native Images -->
-            <plugin>
-                <groupId>org.graalvm.buildtools</groupId>
-                <artifactId>native-maven-plugin</artifactId>
-                <version>${native.maven.plugin.version}</version>
-                <extensions>false</extensions>
-                <configuration>
-                    <outputDirectory>target/artifacts</outputDirectory>
-                    <skipNativeTests>true</skipNativeTests>
-                    <fallback>false</fallback>
-                    <debug>false</debug>
-                    <verbose>false</verbose>
-                    <quickBuild>true</quickBuild>
-                    <buildArgs>
-                        -J-Dfile.encoding=UTF-8
-                    </buildArgs>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>build-native-server</id>
-                        <goals>
-                            <goal>compile-no-fork</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <imageName>Server</imageName>
-                            <mainClass>app.server.ServerMain</mainClass>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>build-native-client</id>
-                        <goals>
-                            <goal>compile-no-fork</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <imageName>Client</imageName>
-                            <mainClass>app.client.ClientMain</mainClass>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- https://mvnrepository.com/artifact/org.codehaus.mojo/exec-maven-plugin -->
-            <!-- Artifacts SHA-256 Hashes -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.5.0</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>powershell</executable>
-                            <arguments>
-                                <argument>-NoProfile</argument>
-                                <argument>-Command</argument>
-                                <argument>
-                                    &quot;src\main\resources\scripts\artifacts-hashing.ps1&quot;
-                                </argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 
-    <dependencies>
-        <!-- General Section -->
-        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.17.0</version>
-        </dependency>
-        <!-- Networking Section -->
-        <!-- https://mvnrepository.com/artifact/com.sshtools/porter -->
-        <dependency>
-            <groupId>com.sshtools</groupId>
-            <artifactId>porter</artifactId>
-            <version>1.0.2</version>
-        </dependency>
-        <!-- Terminal Section -->
-        <!-- https://mvnrepository.com/artifact/org.jline/jline-terminal -->
-        <dependency>
-            <groupId>org.jline</groupId>
-            <artifactId>jline-terminal</artifactId>
-            <version>${jline.bundle.version}</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.jline/jline-terminal-jni -->
-        <dependency>
-            <groupId>org.jline</groupId>
-            <artifactId>jline-terminal-jni</artifactId>
-            <version>${jline.bundle.version}</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.jline/jline-native -->
-        <dependency>
-            <groupId>org.jline</groupId>
-            <artifactId>jline-native</artifactId>
-            <version>${jline.bundle.version}</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.jline/jline-console -->
-        <dependency>
-            <groupId>org.jline</groupId>
-            <artifactId>jline-console</artifactId>
-            <version>${jline.bundle.version}</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.jline/jline-style -->
-        <dependency>
-            <groupId>org.jline</groupId>
-            <artifactId>jline-style</artifactId>
-            <version>${jline.bundle.version}</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.jline/jline-reader -->
-        <dependency>
-            <groupId>org.jline</groupId>
-            <artifactId>jline-reader</artifactId>
-            <version>${jline.bundle.version}</version>
-        </dependency>
-        <!-- Logging Section -->
-        <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>2.0.16</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-core -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>1.5.16</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.5.16</version>
-        </dependency>
-    </dependencies>
+  <!-- Native Image Build Profiles-->
+  <profiles>
+    <profile>
+      <id>dev</id>
+      <properties>
+        <native.build.args>-Ob --no-fallback</native.build.args>
+      </properties>
+    </profile>
+    <profile>
+      <id>prod</id>
+      <properties>
+        <native.build.args>-O3</native.build.args>
+      </properties>
+    </profile>
+  </profiles>
+
+  <properties>
+    <artifacts.output.directory>${project.build.directory}/artifacts</artifacts.output.directory>
+    <jline.bundle.version>3.28.0</jline.bundle.version>
+    <maven.compiler.release>21</maven.compiler.release>
+    <native.build.args>--no-fallback</native.build.args>
+    <native.maven.plugin.version>0.10.4</native.maven.plugin.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <version>0.0.3</version>
 
 </project>

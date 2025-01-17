@@ -1,7 +1,7 @@
 <p align="center"><img src="src/main/resources/images/command.png" alt="command"></p>
 <h1 align="center">JMessenger</h1>
 
-**JMessenger** is a terminal-based chat application that allows you to communicate seamlessly with others over
+**JMessenger** is a terminal-based chatUtils application that allows you to communicate seamlessly with others over
 the internet. It supports both client and server functionalities, making it easy to set up and use.
 
 ## Table of Contents
@@ -9,7 +9,6 @@ the internet. It supports both client and server functionalities, making it easy
 - [Notes](#notes)
 - [Installation](#installation)
 - [Usage](#usage)
-    - [UTF-8 Support](#utf-8-support)
     - [Windows Executable](#windows-executable)
     - [JAR](#jar)
 - [Building](#building)
@@ -34,24 +33,6 @@ the internet. It supports both client and server functionalities, making it easy
 ```
 
 ## Usage
-
-### UTF-8 Support
-
-For being able to see emojis and different symbols on your terminal, you need to check it's encoding. For enabling
-the UTF-8 Charset on the current terminal instance check some tips
-
-- Powershell
-
-```powershell
-$OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding
-```
-
-- Bash
-
-```bash
-export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-```
 
 ### Windows Executable
 

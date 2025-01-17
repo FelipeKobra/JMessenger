@@ -13,7 +13,7 @@
 
 - [ ] Notify clients when someone connects/disconnects
 - [ ] Better warning when server not found on client instead of throwing an exception
-- [ ] Make user terminal automatically support UTF8 Characters
+- [X] Make user terminal automatically support UTF8 Characters
 - [x] Disable Debug on native-image
 
 ## Administration
@@ -26,4 +26,4 @@
     - [ ] User ban
     - [ ] User unban
     - [ ] View banned members
-- [ ] Notify who is the admin on chat
+- [ ] Notify who is the admin on chatUtils

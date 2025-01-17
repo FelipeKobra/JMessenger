@@ -4,14 +4,33 @@
 
 ### Enhancements
 
-- Use GraalVM instead of Launch4j for creating Windows native images. Launch4j made necessary for the user to have JRE
+-- Commit 2 --
+
+- Add UTF-8 support natively on terminal
+- Code structure enhancements
+- Use exception as cancellation mechanism
+- Add more user-friendly warnings
+- Add Google Code Style
+- Add JavaDocs
+- Faster resource closing on Server and Client classes
+
+-- [Commit 1](https://github.com/FelipeKobra/JMessenger/commit/1260371d40a75ea7e6108d8e7c3683d85e746ee1) --
+
+- Use GraalVM instead of Launch4j for creating Windows native images. Launch4j made necessary for
+  the user to have JRE
 - Added JLine in bundles for better compatibility with the native image build
 - Change Deprecated JLine Jansi to JNI Version
 
 ### Bug Fixes
 
+-- [Commit 1](https://github.com/FelipeKobra/JMessenger/commit/1260371d40a75ea7e6108d8e7c3683d85e746ee1) --
+
 - Fixed showing terminal buffered messages a lot of times on closing the server
 - No more Exceptions when exiting of the application via `CTRL + C`
+
+-- Commit 2 --
+
+- Fix wrong maven folder structure
 
 ## [0.0.2](https://github.com/FelipeKobra/JMessenger/tree/v0.0.2) - January 12, 2025
 
