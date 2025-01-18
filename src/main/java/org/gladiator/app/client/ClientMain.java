@@ -1,6 +1,7 @@
 package app.client;
 
 import app.exception.EndApplicationException;
+import app.util.ChatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,9 +22,10 @@ public final class ClientMain {
    * @param args command-line arguments
    */
   public static void main(final String... args) {
-
+    final ChatUtils chatUtils = ChatUtils.create(">");
+    
     while (true) {
-      try (final Client client = Client.createClient()) {
+      try (final Client client = Client.createClient(chatUtils)) {
         client.run();
       } catch (final EndApplicationException e) {
         LOGGER.debug("Client Ended", e);
@@ -31,6 +33,7 @@ public final class ClientMain {
       }
     }
 
+    chatUtils.close();
   }
 }
 

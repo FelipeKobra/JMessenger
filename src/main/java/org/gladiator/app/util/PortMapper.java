@@ -6,7 +6,6 @@ import com.sshtools.porter.UPnP.Gateway;
 import com.sshtools.porter.UPnP.Protocol;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,8 +63,7 @@ public final class PortMapper implements AutoCloseable {
     executor.execute(() -> {
       try {
         if (null == gateway) {
-
-          discovery.awaitCompletion(5, TimeUnit.SECONDS);
+          discovery.awaitCompletion();
         }
         if (null != gateway) {
           final boolean mapped = gateway.map(port, protocol);
@@ -81,21 +79,11 @@ public final class PortMapper implements AutoCloseable {
 
 
   /**
-   * Closes the port on the router specified and the resources of PortMapper.
-   *
-   * @param port The port to be close on the router
-   */
-  public void closeAll(final int port) {
-    closePort(port);
-    close();
-  }
-
-  /**
    * Closes the port on the router for the specified port number using the configured gateway.
    *
    * @param port The port number to close.
    */
-  private void closePort(final int port) {
+  public void closePort(final int port) {
     if (null != gateway) {
       gateway.unmap(port, protocol);
       LOGGER.debug("Port {} unmapped with success", port);

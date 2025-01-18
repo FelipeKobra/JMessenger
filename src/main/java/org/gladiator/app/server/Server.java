@@ -44,16 +44,14 @@ public final class Server implements AutoCloseable {
   private final ServerConfig serverConfig;
   private final ServerSocket serverSocket;
   private final ChatUtils chatUtils;
-  private final PortMapper portMapper;
   private final ExecutorService executor;
 
 
   private Server(final ServerConfig serverConfig, final ServerSocket serverSocket,
-      final ChatUtils chatUtils, final PortMapper portMapper, final ExecutorService executor) {
+      final ChatUtils chatUtils, final ExecutorService executor) {
     this.serverConfig = serverConfig;
     this.serverSocket = serverSocket;
     this.chatUtils = chatUtils;
-    this.portMapper = portMapper;
     this.executor = executor;
   }
 
@@ -63,7 +61,7 @@ public final class Server implements AutoCloseable {
    * @return A new server instance.
    * @throws EndApplicationException If an error occurs during server creation.
    */
-  public static Server createServer()
+  public static Server createServer(final PortMapper portMapper)
       throws EndApplicationException {
 
     final Server server;
@@ -71,21 +69,11 @@ public final class Server implements AutoCloseable {
     try {
       final ServerConfig serverConfig = new ServerConfigFactory(chatUtils).create();
       final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
-      final ServerSocket serverSocket = ServerSocketFactory.getDefault()
-          .createServerSocket(serverConfig.port());
+      final ServerSocket serverSocket = createServerSocket(serverConfig.port(), chatUtils);
 
-      final PortMapper portMapper = PortMapper.createDefault();
       portMapper.openPort(serverConfig.port());
 
-      server = new Server(serverConfig, serverSocket, chatUtils, portMapper, executor);
-    } catch (final BindException e) {
-      LOGGER.debug("Port already in use", e);
-      chatUtils.displayOnScreen(
-          "Address already in use, check if you have another server opened in the same port");
-      throw new EndApplicationException(e);
-    } catch (final IOException e) {
-      LOGGER.error("Error creating Server Socket", e);
-      throw new EndApplicationException(e);
+      server = new Server(serverConfig, serverSocket, chatUtils, executor);
     } catch (final UserInterruptException e) {
       LOGGER.debug(ChatUtils.USER_INTERRUPT_MESSAGE);
       throw new EndApplicationException(e);
@@ -96,10 +84,38 @@ public final class Server implements AutoCloseable {
   }
 
   /**
+   * Creates a ServerSocket bound to the specified port.
+   *
+   * @param port      the port number to bind the ServerSocket to
+   * @param chatUtils the ChatUtils instance for user interaction
+   * @return a ServerSocket bound to the specified port
+   * @throws EndApplicationException if an error occurs during ServerSocket creation
+   */
+  private static ServerSocket createServerSocket(final int port, final ChatUtils chatUtils)
+      throws EndApplicationException {
+
+    final ServerSocket serverSocket;
+    try {
+      serverSocket = ServerSocketFactory.getDefault().createServerSocket(port);
+    } catch (final BindException e) {
+      LOGGER.debug("Port already in use", e);
+      chatUtils.displayOnScreen(
+          "Address already in use, check if you have another server opened in the same port");
+      throw new EndApplicationException(e);
+    } catch (final IOException e) {
+      LOGGER.error("Error creating Server Socket", e);
+      throw new EndApplicationException(e);
+    }
+    return serverSocket;
+  }
+
+  /**
    * Starts the server and begins listening for connections.
    */
-  public void runServer() {
+  public void runServer(final PortMapper portMapper) {
     LOGGER.info("Server Started...");
+    portMapper.openPort(serverConfig.port());
+
     final CompletableFuture<Void> listenToConnectionsFuture = CompletableFuture.runAsync(
         this::listenToConnections, executor);
 
@@ -107,6 +123,8 @@ public final class Server implements AutoCloseable {
         this::broadcastToConnections, executor);
 
     CompletableFuture.allOf(listenToConnectionsFuture, broadcastToConnectionsFuture).join();
+
+    portMapper.closePort(serverConfig.port());
   }
 
   /**
@@ -281,17 +299,18 @@ public final class Server implements AutoCloseable {
 
     isClosingManually.set(true);
 
+    final CompletableFuture<?>[] closeConnectionsFuture = clientConnections.stream()
+        .map(connection -> CompletableFuture.runAsync(connection::close))
+        .toArray(CompletableFuture<?>[]::new);
+
     try {
-      for (final Connection connection : clientConnections) {
-        connection.close();
-      }
       serverSocket.close();
     } catch (final IOException e) {
       LOGGER.error("Error during closing server socket", e);
     } finally {
       chatUtils.close();
       executor.shutdown();
-      portMapper.closeAll(serverConfig.port());
+      CompletableFuture.allOf(closeConnectionsFuture).join();
     }
   }
 

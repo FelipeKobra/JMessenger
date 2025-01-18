@@ -17,6 +17,7 @@
           <failsOnError>true</failsOnError>
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
           <linkXRef>false</linkXRef>
+          <outputDirectory>target/checkstyle</outputDirectory>
         </configuration>
         <executions>
           <execution>
@@ -102,7 +103,6 @@
           <debug>false</debug>
           <fallback>false</fallback>
           <outputDirectory>target/artifacts</outputDirectory>
-          <quickBuild>true</quickBuild>
           <skipNativeTests>true</skipNativeTests>
           <verbose>false</verbose>
         </configuration>
@@ -253,7 +253,7 @@
     <profile>
       <id>dev</id>
       <properties>
-        <native.build.args>-Ob --no-fallback</native.build.args>
+        <native.build.args>-Ob</native.build.args>
       </properties>
     </profile>
     <profile>

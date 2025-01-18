@@ -1,10 +1,20 @@
 # Change Log
 
-## [0.0.3](https://github.com/FelipeKobra/JMessenger/tree/v0.0.3) - To Release
+## [0.0.4](https://github.com/FelipeKobra/JMessenger/tree/v0.0.4) - To Release
+
+## Enhancements
+
+-- Commit 1 --
+
+- More organized README for developers
+- Unique instance for ChatUtils on client instead of creating one for each instance
+- Remove Server PortMapper property and create it outside
+
+## [0.0.3](https://github.com/FelipeKobra/JMessenger/tree/v0.0.3) - January 17, 2025
 
 ### Enhancements
 
--- Commit 2 --
+-- [Commit 2](https://github.com/FelipeKobra/JMessenger/commit/0a6223b066b3e8e8074578609740c209ffda69ab) --
 
 - Add UTF-8 support natively on terminal
 - Code structure enhancements
@@ -28,7 +38,7 @@
 - Fixed showing terminal buffered messages a lot of times on closing the server
 - No more Exceptions when exiting of the application via `CTRL + C`
 
--- Commit 2 --
+-- [Commit 2](https://github.com/FelipeKobra/JMessenger/commit/0a6223b066b3e8e8074578609740c209ffda69ab) --
 
 - Fix wrong maven folder structure
 

@@ -51,12 +51,11 @@ public final class Client implements AutoCloseable {
    * @return a new Client instance
    * @throws EndApplicationException if an error occurs during client creation
    */
-  public static Client createClient()
+  public static Client createClient(final ChatUtils chatUtils)
       throws EndApplicationException {
 
     Client client = null;
     try {
-      final ChatUtils chatUtils = ChatUtils.create(">");
       final ClientConfig clientConfig = new ClientConfigProvider(
           chatUtils).createClientConfig();
       final Socket socket = createSocket(chatUtils, clientConfig.serverAddress(),
@@ -258,7 +257,6 @@ public final class Client implements AutoCloseable {
   public void close() {
     LOGGER.debug("Closing connection");
     try {
-      chatUtils.close();
       executor.shutdownNow();
       socket.close();
     } catch (final IOException e) {

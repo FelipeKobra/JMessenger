@@ -1,42 +1,37 @@
 <p align="center"><img src="src/main/resources/images/command.png" alt="command"></p>
 <h1 align="center">JMessenger</h1>
 
-**JMessenger** is a terminal-based chatUtils application that allows you to communicate seamlessly with others over
+**JMessenger** is a terminal-based chatUtils application that allows you to communicate seamlessly
+with others over
 the internet. It supports both client and server functionalities, making it easy to set up and use.
 
 ## Table of Contents
 
 - [Notes](#notes)
-- [Installation](#installation)
 - [Usage](#usage)
     - [Windows Executable](#windows-executable)
     - [JAR](#jar)
+- [Developers](#developers)
+    - [Requirements](#requirements)
+- [Installation](#installation)
 - [Building](#building)
     - [Project](#project)
     - [Artifacts](#artifacts)
-- [Requirements for Developers](#requirements-for-developers)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## Notes
 
-- You don't need to forward ports on your router if UPnP (Universal Plug and Play) is enabled. This allows the
+- You don't need to forward ports on your router if UPnP (Universal Plug and Play) is enabled. This
+  allows the
   application to automatically configure the router for communication.
-
-## Installation
-
-1. Open the project folder with your terminal.
-2. Execute the following command to install dependencies:
-
-```bash
-   ./mvnw install
-```
 
 ## Usage
 
 ### Windows Executable
 
-Download the executable (`.exe`) from the [Releases](https://github.com/FelipeKobra/JavaTerminalChat/releases) section.
+Download the executable (`.exe`) from
+the [Releases](https://github.com/FelipeKobra/JavaTerminalChat/releases) section.
 Use the following commands in your console:
 
 - For the Chat Server:
@@ -50,7 +45,8 @@ Use the following commands in your console:
 
 ### JAR
 
-Download the JAR (`.jar`) from the [Releases](https://github.com/FelipeKobra/JavaTerminalChat/releases) section. Use the
+Download the JAR (`.jar`) from
+the [Releases](https://github.com/FelipeKobra/JavaTerminalChat/releases) section. Use the
 following commands in your console:
 
 - For the Chat Server:
@@ -68,16 +64,38 @@ following commands in your console:
 
 There are two main application classes:
 
-1. **ClientMain** (`app.client.ClientMain`): Handles client-side operations, allowing users to send and receive
+1. **ClientMain** (`app.client.ClientMain`): Handles client-side operations, allowing users to send
+   and receive
    messages.
-2. **ServerMain** (`app.server.ServerMain`): Manages server-side operations, redistributing messages to connected
+2. **ServerMain** (`app.server.ServerMain`): Manages server-side operations, redistributing messages
+   to connected
    clients.
 
 #### Example
 
 1. Start the `ChatServer` by running the `ServerMain` class.
-2. Open a new terminal and start a `ChatClient` instance. When prompted, enter the IP address of the computer running
+2. Open a new terminal and start a `ChatClient` instance. When prompted, enter the IP address of the
+   computer running
    the server. If the server is running locally, you can leave it empty or enter `localhost`.
+
+---
+
+## Developers
+
+### Requirements
+
+- JDK 21 or higher
+- GraalVM JDK 21 or Higher
+- Powershell
+
+## Installation
+
+1. Open the project folder with your terminal.
+2. Execute the following command to install dependencies:
+
+```bash
+   ./mvnw install
+```
 
 ## Building
 
@@ -97,15 +115,10 @@ To build the artifacts, run this command in the root folder:
     .\mvnw clean package
    ```
 
-## Requirements for Developers
-
-- JDK 21 or higher
-- GraalVM JDK 21 or Higher
-- Powershell
-
 ## Contributing
 
-If you would like to contribute to JMessenger, please fork the repository and submit a pull request. For major changes,
+If you would like to contribute to JMessenger, please fork the repository and submit a pull request.
+For major changes,
 please open an issue first to discuss what you would like to change.
 
 ## License
