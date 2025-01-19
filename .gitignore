@@ -3,6 +3,8 @@ out/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+src/**/pgo/client/**
+src/**/pgo/server/**
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
@@ -46,6 +48,9 @@ build/
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
+.idea/**/checkstyleidea-libs
+.idea/**/codeStyles
+.idea/**/inspectionProfiles
 
 # AWS User-specific
 .idea/**/aws.xml
@@ -61,6 +66,8 @@ build/
 .idea/**/dynamic.xml
 .idea/**/uiDesigner.xml
 .idea/**/dbnavigator.xml
+.idea/**/checkstyle-idea.xml
+.idea/**/sonarlint.xml
 
 # Gradle
 .idea/**/gradle.xml

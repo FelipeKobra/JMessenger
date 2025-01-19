@@ -19,11 +19,14 @@ public final class PortMapper implements AutoCloseable {
   private static final String DISCOVERY_PROCESS_INTERRUPTED = "UPnP discovery process interrupted";
 
   private final ExecutorService executor;
+  private final int mappedPort;
   private final Discovery discovery;
   private Gateway gateway;
 
-  private PortMapper(final ExecutorService executor, final Discovery discovery) {
+  private PortMapper(final ExecutorService executor, final int mappedPort,
+      final Discovery discovery) {
     this.executor = executor;
+    this.mappedPort = mappedPort;
     this.discovery = discovery;
   }
 
@@ -33,7 +36,7 @@ public final class PortMapper implements AutoCloseable {
    *
    * @return A new {@link PortMapper} instance.
    */
-  public static PortMapper createDefault() {
+  public static PortMapper createDefault(final int portToMap) {
     final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
     final Discovery discovery = new DiscoveryBuilder().withSoTimeout(600)
@@ -41,7 +44,7 @@ public final class PortMapper implements AutoCloseable {
         .onGateway(gw -> LOGGER.debug("Gateway found {}", gw.ip()))
         .build();
 
-    final PortMapper portMapper = new PortMapper(executor, discovery);
+    final PortMapper portMapper = new PortMapper(executor, portToMap, discovery);
 
     executor.execute(() -> {
       try {
@@ -55,20 +58,18 @@ public final class PortMapper implements AutoCloseable {
   }
 
   /**
-   * Opens a port on the router for the specified port number using the configured gateway.
-   *
-   * @param port The port number to open.
+   * Opens the {@link PortMapper} port on the router using the configured gateway.
    */
-  public void openPort(final int port) {
+  public void openPort() {
     executor.execute(() -> {
       try {
         if (null == gateway) {
           discovery.awaitCompletion();
         }
         if (null != gateway) {
-          final boolean mapped = gateway.map(port, protocol);
+          final boolean mapped = gateway.map(mappedPort, protocol);
           if (mapped) {
-            LOGGER.debug("Port {} mapped with success", port);
+            LOGGER.debug("Port {} mapped with success", mappedPort);
           }
         }
       } catch (final IllegalStateException e) {
@@ -80,13 +81,11 @@ public final class PortMapper implements AutoCloseable {
 
   /**
    * Closes the port on the router for the specified port number using the configured gateway.
-   *
-   * @param port The port number to close.
    */
-  public void closePort(final int port) {
+  private void closePort() {
     if (null != gateway) {
-      gateway.unmap(port, protocol);
-      LOGGER.debug("Port {} unmapped with success", port);
+      gateway.unmap(mappedPort, protocol);
+      LOGGER.debug("Port {} unmapped with success", mappedPort);
     }
   }
 
@@ -95,10 +94,11 @@ public final class PortMapper implements AutoCloseable {
   }
 
   /**
-   * Closes the {@link PortMapper}, shutting down the executor and closing the discovery instance.
+   * Closes the {@link PortMapper}, and it's port on the router.
    */
   @Override
   public void close() {
+    closePort();
     discovery.close();
     executor.shutdownNow();
   }

@@ -1,23 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns="http://maven.apache.org/POM/4.0.0"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <artifactId>JMessenger</artifactId>
 
 
   <build>
     <plugins>
-      <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-checkstyle-plugin -->
       <!-- Check Code Style-->
       <plugin>
         <artifactId>maven-checkstyle-plugin</artifactId>
         <configuration>
           <configLocation>google_checks.xml</configLocation>
-          <consoleOutput>false</consoleOutput>
           <failsOnError>true</failsOnError>
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
-          <linkXRef>false</linkXRef>
-          <outputDirectory>target/checkstyle</outputDirectory>
+          <linkXRef>false</linkXRef><!---->
+          <outputDirectory>${project.artifacts.directory}/checkstyle</outputDirectory>
         </configuration>
         <executions>
           <execution>
@@ -31,7 +29,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <version>3.6.0</version>
       </plugin>
-      <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-shade-plugin -->
       <!-- Create Application Jars -->
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
@@ -56,7 +53,7 @@
           <execution>
             <configuration>
               <finalName>Server</finalName>
-              <outputDirectory>${artifacts.output.directory}</outputDirectory>
+              <outputDirectory>${project.artifacts.directory}</outputDirectory>
               <transformers>
                 <transformer
                   implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -74,7 +71,7 @@
           <execution>
             <configuration>
               <finalName>Client</finalName>
-              <outputDirectory>${artifacts.output.directory}</outputDirectory>
+              <outputDirectory>${project.artifacts.directory}</outputDirectory>
               <transformers>
                 <transformer
                   implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -92,24 +89,21 @@
         <groupId>org.apache.maven.plugins</groupId>
         <version>3.6.0</version>
       </plugin>
-      <!-- https://mvnrepository.com/artifact/org.graalvm.buildtools/native-maven-plugin -->
       <!-- Create Windows Native Images -->
       <plugin>
         <artifactId>native-maven-plugin</artifactId>
         <configuration>
-          <buildArgs>
-            ${native.build.args}
-          </buildArgs>
-          <debug>false</debug>
-          <fallback>false</fallback>
-          <outputDirectory>target/artifacts</outputDirectory>
-          <skipNativeTests>true</skipNativeTests>
-          <verbose>false</verbose>
+          <outputDirectory>${project.artifacts.directory}</outputDirectory>
+          <skip>${native.build.skip}</skip>
         </configuration>
         <executions>
           <!-- Server EXE -->
           <execution>
             <configuration>
+              <buildArgs>
+                ${native.build.args}
+                ${native.pgo.server.args}
+              </buildArgs>
               <imageName>Server</imageName>
               <mainClass>app.server.ServerMain</mainClass>
             </configuration>
@@ -122,6 +116,10 @@
           <!-- Client EXE -->
           <execution>
             <configuration>
+              <buildArgs>
+                ${native.build.args}
+                ${native.pgo.client.args}
+              </buildArgs>
               <imageName>Client</imageName>
               <mainClass>app.client.ClientMain</mainClass>
             </configuration>
@@ -132,11 +130,9 @@
             <phase>package</phase>
           </execution>
         </executions>
-        <extensions>false</extensions>
         <groupId>org.graalvm.buildtools</groupId>
         <version>${native.maven.plugin.version}</version>
       </plugin>
-      <!-- https://mvnrepository.com/artifact/org.codehaus.mojo/exec-maven-plugin -->
       <!-- Artifacts SHA-256 Hashes -->
       <plugin>
         <artifactId>exec-maven-plugin</artifactId>
@@ -251,25 +247,53 @@
   <!-- Native Image Build Profiles-->
   <profiles>
     <profile>
-      <id>dev</id>
+      <id>native-dev</id>
       <properties>
         <native.build.args>-Ob</native.build.args>
+        <native.build.skip>false</native.build.skip>
       </properties>
     </profile>
     <profile>
-      <id>prod</id>
+      <id>native-prod</id>
       <properties>
         <native.build.args>-O3</native.build.args>
+        <native.build.skip>false</native.build.skip>
+      </properties>
+    </profile>
+    <profile>
+      <id>native-prod-pgo</id>
+      <properties>
+        <native.build.skip>false</native.build.skip>
+        <native.pgo.client.args>--pgo=${native.pgo.directory}/client/default.iprof
+        </native.pgo.client.args>
+        <native.pgo.server.args>--pgo=${native.pgo.directory}/server/default.iprof
+        </native.pgo.server.args>
+      </properties>
+    </profile>
+    <profile>
+      <id>native-pgo-build</id>
+      <properties>
+        <native.build.skip>false</native.build.skip>
+        <native.pgo.client.args>--pgo-instrument
+          -o ${native.pgo.directory}/client/Client-PGO
+        </native.pgo.client.args>
+        <native.pgo.server.args>--pgo-instrument
+          -o ${native.pgo.directory}/server/Server-PGO
+        </native.pgo.server.args>
       </properties>
     </profile>
   </profiles>
 
   <properties>
-    <artifacts.output.directory>${project.build.directory}/artifacts</artifacts.output.directory>
     <jline.bundle.version>3.28.0</jline.bundle.version>
     <maven.compiler.release>21</maven.compiler.release>
-    <native.build.args>--no-fallback</native.build.args>
+    <native.build.args/>
+    <native.build.skip>true</native.build.skip>
     <native.maven.plugin.version>0.10.4</native.maven.plugin.version>
+    <native.pgo.client.args/>
+    <native.pgo.directory>src/main/resources/META-INF/native-image/pgo</native.pgo.directory>
+    <native.pgo.server.args/>
+    <project.artifacts.directory>target/artifacts</project.artifacts.directory>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 

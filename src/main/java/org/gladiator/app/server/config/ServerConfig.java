@@ -12,6 +12,8 @@ import org.apache.commons.lang3.Validate;
  */
 public record ServerConfig(String name, int port) {
 
+  private static final String DEFAULT_NAME = "Server";
+
   /**
    * Constructs a new ServerConfig with the specified name and port.
    *
@@ -26,17 +28,12 @@ public record ServerConfig(String name, int port) {
    * Constructs a new ServerConfig with default name and port.
    */
   public ServerConfig() {
-    this(getDefaultName(), getDefaultPort());
+    this(getDefaultName(), PORT_DEFAULT);
   }
 
 
   public static String getDefaultName() {
-    return "Server";
-  }
-
-
-  private static int getDefaultPort() {
-    return PORT_DEFAULT;
+    return DEFAULT_NAME;
   }
 
 

@@ -2,9 +2,16 @@
 
 ## [0.0.4](https://github.com/FelipeKobra/JMessenger/tree/v0.0.4) - To Release
 
-## Enhancements
+### Enhancements
 
--- Commit 1 --
+-- Commit 2 --
+
+- Add support for native image profiles
+- Add Profile-Guided Optimization (PGO) support for native images
+- Modify PortMapper logic to require developers to close ports they open
+- Change META-INF to the maven default place under resources
+
+-- [Commit 1](https://github.com/FelipeKobra/JMessenger/commit/b48f120356808012cdbb39e72e248073aa213fd0) --
 
 - More organized README for developers
 - Unique instance for ChatUtils on client instead of creating one for each instance

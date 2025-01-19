@@ -1,3 +1,4 @@
+<!--suppress HtmlDeprecatedAttribute -->
 <p align="center"><img src="src/main/resources/images/command.png" alt="command"></p>
 <h1 align="center">JMessenger</h1>
 
@@ -16,7 +17,11 @@ the internet. It supports both client and server functionalities, making it easy
 - [Installation](#installation)
 - [Building](#building)
     - [Project](#project)
-    - [Artifacts](#artifacts)
+    - [JAR Artifacts](#jar-artifacts)
+- [Building Natives](#building-natives)
+    - [Development](#development)
+    - [Production](#production)
+    - [PGO](#pgo-profile-guided-optimization)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -107,12 +112,61 @@ To build this project, run the following command in the root folder:
     .\mvnw clean install
    ```
 
-### Artifacts
+### JAR Artifacts
 
 To build the artifacts, run this command in the root folder:
 
    ```bash
     .\mvnw clean package
+   ```
+
+## Building Natives
+
+### Development
+
+To create a fast build for development with low optimization, run the following command:
+
+   ```bash
+    .\mvnw -Pnative-dev clean package
+   ```
+
+This will generate a native application with minimal optimization, suitable for development and
+testing purposes.
+
+### Production
+
+To create a slow build, but optimized application, run the following command:
+
+   ```bash
+    .\mvnw -Pnative-prod clean package
+   ```
+
+### PGO (Profile-Guided Optimization)
+
+To create PGO executables for even better performance on production, follow these steps:
+
+**1 - Create the PGO Instruments**
+
+   ```bash
+    .\mvnw -pnative-pgo-build clean package
+   ```
+
+This will generate the PGO instruments in the `src/main/resources/META-INF/native-image/pgo`
+directory
+and their respective folders.
+
+**2 - Execute the PGO Instruments**
+
+1. Run the PGO instruments.
+2. Interact with the application to generate profiling data.
+3. Close the application.
+
+**3 - Create the production file with PGO**
+
+Run the following command to create the production files with PGO:
+
+   ```bash
+    .\mvnw -pnative-prod-pgo clean package
    ```
 
 ## Contributing

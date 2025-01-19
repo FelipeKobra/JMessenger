@@ -246,21 +246,25 @@ public final class Client implements AutoCloseable {
     try {
       final String choice = chatUtils.getUserInput("Connect to another server? y/N: ");
       if (!"Y".equalsIgnoreCase(choice)) {
-        throw new EndApplicationException("User chose to not reconnnnect");
+        throw new EndApplicationException("User chose to not reconnect");
       }
     } catch (final UserInterruptException | EndOfFileException e) {
       throw new EndApplicationException(e);
     }
   }
 
-  @Override
-  public void close() {
-    LOGGER.debug("Closing connection");
+  private void closeSocket() {
     try {
-      executor.shutdownNow();
       socket.close();
     } catch (final IOException e) {
       LOGGER.error("Error closing the socket connection: {}", e, e);
     }
+  }
+
+  @Override
+  public void close() {
+    LOGGER.debug("Closing connection");
+    executor.shutdownNow();
+    closeSocket();
   }
 }

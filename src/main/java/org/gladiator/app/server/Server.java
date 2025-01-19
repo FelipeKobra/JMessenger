@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 public final class Server implements AutoCloseable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Server.class.getName());
+
   private final List<Connection> clientConnections = new CopyOnWriteArrayList<>();
   private final AtomicBoolean isClosingManually = new AtomicBoolean(false);
 
@@ -45,7 +46,6 @@ public final class Server implements AutoCloseable {
   private final ServerSocket serverSocket;
   private final ChatUtils chatUtils;
   private final ExecutorService executor;
-
 
   private Server(final ServerConfig serverConfig, final ServerSocket serverSocket,
       final ChatUtils chatUtils, final ExecutorService executor) {
@@ -61,7 +61,7 @@ public final class Server implements AutoCloseable {
    * @return A new server instance.
    * @throws EndApplicationException If an error occurs during server creation.
    */
-  public static Server createServer(final PortMapper portMapper)
+  public static Server createServer()
       throws EndApplicationException {
 
     final Server server;
@@ -70,8 +70,6 @@ public final class Server implements AutoCloseable {
       final ServerConfig serverConfig = new ServerConfigFactory(chatUtils).create();
       final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
       final ServerSocket serverSocket = createServerSocket(serverConfig.port(), chatUtils);
-
-      portMapper.openPort(serverConfig.port());
 
       server = new Server(serverConfig, serverSocket, chatUtils, executor);
     } catch (final UserInterruptException e) {
@@ -110,21 +108,24 @@ public final class Server implements AutoCloseable {
   }
 
   /**
-   * Starts the server and begins listening for connections.
+   * Starts the server, begins listening and broadcasting for connections.
    */
-  public void runServer(final PortMapper portMapper) {
+  public void runServer() {
     LOGGER.info("Server Started...");
-    portMapper.openPort(serverConfig.port());
 
-    final CompletableFuture<Void> listenToConnectionsFuture = CompletableFuture.runAsync(
-        this::listenToConnections, executor);
+    final int serverPort = serverConfig.port();
 
-    final CompletableFuture<Void> broadcastToConnectionsFuture = CompletableFuture.runAsync(
-        this::broadcastToConnections, executor);
+    try (final PortMapper portMapper = PortMapper.createDefault(serverPort)) {
+      portMapper.openPort();
 
-    CompletableFuture.allOf(listenToConnectionsFuture, broadcastToConnectionsFuture).join();
+      final CompletableFuture<Void> listenToConnectionsFuture = CompletableFuture.runAsync(
+          this::listenToConnections, executor);
 
-    portMapper.closePort(serverConfig.port());
+      final CompletableFuture<Void> broadcastToConnectionsFuture = CompletableFuture.runAsync(
+          this::broadcastToConnections, executor);
+
+      CompletableFuture.allOf(listenToConnectionsFuture, broadcastToConnectionsFuture).join();
+    }
   }
 
   /**
@@ -190,7 +191,7 @@ public final class Server implements AutoCloseable {
   /**
    * Broadcasts a message to all connected clients.
    *
-   * @param msg The message to be broadcasted.
+   * @param msg The message to be broadcast.
    */
   private void broadcastMessageToConnections(final String msg) {
     final List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -293,6 +294,14 @@ public final class Server implements AutoCloseable {
     return receiveClientNameFuture.join();
   }
 
+  private void closeServerSocket() {
+    try {
+      serverSocket.close();
+    } catch (final IOException e) {
+      LOGGER.error("Error during closing server socket", e);
+    }
+  }
+
   @Override
   public void close() {
     LOGGER.info("Closing all connections...");
@@ -303,15 +312,10 @@ public final class Server implements AutoCloseable {
         .map(connection -> CompletableFuture.runAsync(connection::close))
         .toArray(CompletableFuture<?>[]::new);
 
-    try {
-      serverSocket.close();
-    } catch (final IOException e) {
-      LOGGER.error("Error during closing server socket", e);
-    } finally {
-      chatUtils.close();
-      executor.shutdown();
-      CompletableFuture.allOf(closeConnectionsFuture).join();
-    }
+    closeServerSocket();
+    chatUtils.close();
+    executor.shutdownNow();
+    CompletableFuture.allOf(closeConnectionsFuture).join();
   }
 
 }
