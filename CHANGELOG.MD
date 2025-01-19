@@ -4,7 +4,7 @@
 
 ### Enhancements
 
--- Commit 2 --
+-- [Commit 2](https://github.com/FelipeKobra/JMessenger/commit/9adebf4cdd3b3d455bb1f11cfc0b01cb58a8d7a8) --
 
 - Add support for native image profiles
 - Add Profile-Guided Optimization (PGO) support for native images
