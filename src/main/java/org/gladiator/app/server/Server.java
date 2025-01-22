@@ -1,15 +1,6 @@
-package app.server;
+package org.gladiator.app.server;
 
-import app.exception.EndApplicationException;
-import app.server.config.ServerConfig;
-import app.server.config.ServerConfigFactory;
-import app.util.ChatUtils;
-import app.util.PortMapper;
-import app.util.connection.Connection;
-import app.util.connection.ConnectionMessage;
-import app.util.connection.ConnectionMessageUtils;
-import app.util.io.SocketIo;
-import app.util.io.SocketIoAsyncFactory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -23,10 +14,20 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import javax.net.ServerSocketFactory;
+import org.gladiator.app.exception.EndApplicationException;
+import org.gladiator.app.server.config.ServerConfig;
+import org.gladiator.app.server.config.ServerConfigFactory;
+import org.gladiator.app.util.ChatUtils;
+import org.gladiator.app.util.NamedVirtualThreadExecutorFactory;
+import org.gladiator.app.util.PortMapper;
+import org.gladiator.app.util.connection.Connection;
+import org.gladiator.app.util.connection.ConnectionMessage;
+import org.gladiator.app.util.connection.ConnectionMessageUtils;
+import org.gladiator.app.util.io.SocketIo;
+import org.gladiator.app.util.io.SocketIoAsyncFactory;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.UserInterruptException;
 import org.slf4j.Logger;
@@ -68,7 +69,7 @@ public final class Server implements AutoCloseable {
     final ChatUtils chatUtils = ChatUtils.create(">");
     try {
       final ServerConfig serverConfig = new ServerConfigFactory(chatUtils).create();
-      final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+      final ExecutorService executor = NamedVirtualThreadExecutorFactory.create("Jorge");
       final ServerSocket serverSocket = createServerSocket(serverConfig.port(), chatUtils);
 
       server = new Server(serverConfig, serverSocket, chatUtils, executor);
@@ -132,7 +133,7 @@ public final class Server implements AutoCloseable {
    * Listens for incoming connections from clients.
    */
   private void listenToConnections() {
-    LOGGER.info("Listening to connections...");
+    LOGGER.debug("Listening to connections...");
 
     while (!serverSocket.isClosed() && serverSocket.isBound()) {
       final Socket clientSocket;
@@ -166,7 +167,7 @@ public final class Server implements AutoCloseable {
    * Broadcasts messages to all connected clients.
    */
   private void broadcastToConnections() {
-    LOGGER.info("Broadcasting to connections...");
+    LOGGER.debug("Broadcasting to connections...");
     LOGGER.info("Type `quit` to exit");
 
     try {
@@ -212,7 +213,7 @@ public final class Server implements AutoCloseable {
   private void receiveMessages(final BufferedReader reader, final Connection clientConnection) {
     final String clientName = clientConnection.getName();
 
-    executor.execute(() -> {
+    executor.submit(() -> {
       try {
         processMessages(reader, clientConnection);
       } catch (final UncheckedIOException e) {

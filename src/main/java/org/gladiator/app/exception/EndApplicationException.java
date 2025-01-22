@@ -1,4 +1,4 @@
-package app.exception;
+package org.gladiator.app.exception;
 
 /**
  * Exception thrown to indicate that the application should end.

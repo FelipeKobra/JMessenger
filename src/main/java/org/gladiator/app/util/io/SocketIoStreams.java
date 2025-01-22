@@ -1,4 +1,4 @@
-package app.util.io;
+package org.gladiator.app.util.io;
 
 import java.io.InputStream;
 import java.io.OutputStream;

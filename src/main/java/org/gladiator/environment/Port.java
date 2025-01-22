@@ -1,4 +1,4 @@
-package environment;
+package org.gladiator.environment;
 
 /**
  * Utility class for port-related constants.

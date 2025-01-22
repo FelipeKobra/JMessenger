@@ -1,11 +1,11 @@
-package app.util;
+package org.gladiator.app.util;
 
 import com.sshtools.porter.UPnP.Discovery;
 import com.sshtools.porter.UPnP.DiscoveryBuilder;
 import com.sshtools.porter.UPnP.Gateway;
 import com.sshtools.porter.UPnP.Protocol;
+import java.io.UncheckedIOException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +37,7 @@ public final class PortMapper implements AutoCloseable {
    * @return A new {@link PortMapper} instance.
    */
   public static PortMapper createDefault(final int portToMap) {
-    final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+    final ExecutorService executor = NamedVirtualThreadExecutorFactory.create("port_mapper");
 
     final Discovery discovery = new DiscoveryBuilder().withSoTimeout(600)
         .withoutShutdownHooks()
@@ -46,10 +46,10 @@ public final class PortMapper implements AutoCloseable {
 
     final PortMapper portMapper = new PortMapper(executor, portToMap, discovery);
 
-    executor.execute(() -> {
+    executor.submit(() -> {
       try {
         portMapper.setGateway(discovery.gateway().orElse(null));
-      } catch (final IllegalStateException e) {
+      } catch (final IllegalStateException | UncheckedIOException e) {
         LOGGER.debug(DISCOVERY_PROCESS_INTERRUPTED, e);
       }
     });
@@ -61,7 +61,7 @@ public final class PortMapper implements AutoCloseable {
    * Opens the {@link PortMapper} port on the router using the configured gateway.
    */
   public void openPort() {
-    executor.execute(() -> {
+    executor.submit(() -> {
       try {
         if (null == gateway) {
           discovery.awaitCompletion();
@@ -72,7 +72,7 @@ public final class PortMapper implements AutoCloseable {
             LOGGER.debug("Port {} mapped with success", mappedPort);
           }
         }
-      } catch (final IllegalStateException e) {
+      } catch (final IllegalStateException | UncheckedIOException e) {
         LOGGER.debug(DISCOVERY_PROCESS_INTERRUPTED, e);
       }
     });
@@ -98,7 +98,6 @@ public final class PortMapper implements AutoCloseable {
    */
   @Override
   public void close() {
-    closePort();
     discovery.close();
     executor.shutdownNow();
   }

@@ -1,4 +1,4 @@
-package app.util;
+package org.gladiator.app.util;
 
 import java.io.IOException;
 import java.util.Objects;

@@ -17,6 +17,14 @@
 - Unique instance for ChatUtils on client instead of creating one for each instance
 - Remove Server PortMapper property and create it outside
 
+### Bug Fixes
+
+-- [Commit 3]() --
+
+- Fix project folder structure
+- Remove IDE specific items from Git
+- Change ExecutorService `execute` to `submit`
+
 ## [0.0.3](https://github.com/FelipeKobra/JMessenger/tree/v0.0.3) - January 17, 2025
 
 ### Enhancements

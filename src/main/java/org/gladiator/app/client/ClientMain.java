@@ -1,7 +1,8 @@
-package app.client;
+package org.gladiator.app.client;
 
-import app.exception.EndApplicationException;
-import app.util.ChatUtils;
+
+import org.gladiator.app.exception.EndApplicationException;
+import org.gladiator.app.util.ChatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,7 @@ public final class ClientMain {
    */
   public static void main(final String... args) {
     final ChatUtils chatUtils = ChatUtils.create(">");
-    
+
     while (true) {
       try (final Client client = Client.createClient(chatUtils)) {
         client.run();

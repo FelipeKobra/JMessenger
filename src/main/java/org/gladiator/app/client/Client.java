@@ -1,12 +1,6 @@
-package app.client;
+package org.gladiator.app.client;
 
-import app.client.config.ClientConfig;
-import app.client.config.ClientConfigProvider;
-import app.exception.EndApplicationException;
-import app.util.ChatUtils;
-import app.util.connection.ConnectionMessageUtils;
-import app.util.io.SocketIo;
-import app.util.io.SocketIoAsyncFactory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -16,8 +10,15 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import javax.net.SocketFactory;
+import org.gladiator.app.client.config.ClientConfig;
+import org.gladiator.app.client.config.ClientConfigProvider;
+import org.gladiator.app.exception.EndApplicationException;
+import org.gladiator.app.util.ChatUtils;
+import org.gladiator.app.util.NamedVirtualThreadExecutorFactory;
+import org.gladiator.app.util.connection.ConnectionMessageUtils;
+import org.gladiator.app.util.io.SocketIo;
+import org.gladiator.app.util.io.SocketIoAsyncFactory;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.UserInterruptException;
 import org.slf4j.Logger;
@@ -60,7 +61,7 @@ public final class Client implements AutoCloseable {
           chatUtils).createClientConfig();
       final Socket socket = createSocket(chatUtils, clientConfig.serverAddress(),
           clientConfig.port());
-      final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+      final ExecutorService executor = NamedVirtualThreadExecutorFactory.create("client");
 
       client = new Client(clientConfig, socket, executor, chatUtils);
     } catch (final UserInterruptException | EndOfFileException e) {

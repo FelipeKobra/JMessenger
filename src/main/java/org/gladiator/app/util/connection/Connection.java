@@ -1,4 +1,4 @@
-package app.util.connection;
+package org.gladiator.app.util.connection;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.util.List;
 import java.util.Objects;
 import org.apache.commons.lang3.Validate;
+import org.gladiator.app.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +15,7 @@ import org.slf4j.LoggerFactory;
  * Represents a connection to a client. This class handles the input and output streams for the
  * client connection.
  *
- * @see app.server.Server
+ * @see Server
  */
 public final class Connection implements AutoCloseable {
 

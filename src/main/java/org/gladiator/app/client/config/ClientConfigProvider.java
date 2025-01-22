@@ -1,8 +1,8 @@
-package app.client.config;
+package org.gladiator.app.client.config;
 
-import app.util.ChatUtils;
-import environment.Port;
 
+import org.gladiator.app.util.ChatUtils;
+import org.gladiator.environment.Port;
 
 /**
  * Provides configuration for the client by interacting with the user to receive input.
@@ -26,7 +26,7 @@ public final class ClientConfigProvider {
    * @return a new ClientConfig instance with the user's input
    */
   public ClientConfig createClientConfig() {
-    
+
     final String clientName = receiveName();
     final String serverAddress = receiveAddress();
     final int serverPort = receivePort();

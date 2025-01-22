@@ -1,4 +1,4 @@
-package app.util.io;
+package org.gladiator.app.util.io;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,7 +32,8 @@ public final class SocketIoAsyncFactory {
    * @return A new {@link SocketIo} instance.
    */
   public static SocketIo create(final Socket clientSocket, final Executor executor) {
-    final SocketIoStreams socketIoStreams = createSocketIoStreams(clientSocket, executor);
+    final SocketIoStreams socketIoStreams = createSocketIoStreams(clientSocket,
+        executor);
 
     final BufferedReader reader = new BufferedReader(
         new InputStreamReader(socketIoStreams.socketInputStream(), StandardCharsets.UTF_8));

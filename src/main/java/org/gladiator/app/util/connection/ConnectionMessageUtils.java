@@ -1,4 +1,4 @@
-package app.util.connection;
+package org.gladiator.app.util.connection;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;

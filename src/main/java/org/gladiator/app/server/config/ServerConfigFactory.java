@@ -1,8 +1,9 @@
-package app.server.config;
+package org.gladiator.app.server.config;
 
-import app.util.ChatUtils;
-import environment.Port;
+
 import org.apache.commons.lang3.Validate;
+import org.gladiator.app.util.ChatUtils;
+import org.gladiator.environment.Port;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

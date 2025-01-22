@@ -1,11 +1,10 @@
-package app.server.config;
+package org.gladiator.app.server.config;
 
-import static environment.Port.PORT_DEFAULT;
-import static environment.Port.PORT_MAX;
-import static environment.Port.PORT_MIN;
 
 import java.util.Objects;
 import org.apache.commons.lang3.Validate;
+import org.gladiator.environment.Port;
+
 
 /**
  * Represents the configuration for a server, including its name and port.
@@ -28,7 +27,7 @@ public record ServerConfig(String name, int port) {
    * Constructs a new ServerConfig with default name and port.
    */
   public ServerConfig() {
-    this(getDefaultName(), PORT_DEFAULT);
+    this(getDefaultName(), Port.PORT_DEFAULT);
   }
 
 
@@ -40,7 +39,7 @@ public record ServerConfig(String name, int port) {
   private void validateArgs(final String name, final int port) {
     Objects.requireNonNull(name);
     Validate.notBlank(name);
-    Validate.inclusiveBetween(PORT_MIN, PORT_MAX, port);
+    Validate.inclusiveBetween(Port.PORT_MIN, Port.PORT_MAX, port);
   }
 
 
