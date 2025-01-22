@@ -98,6 +98,7 @@ public final class PortMapper implements AutoCloseable {
    */
   @Override
   public void close() {
+    closePort();
     discovery.close();
     executor.shutdownNow();
   }
