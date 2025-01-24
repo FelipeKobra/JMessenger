@@ -1,2 +1,2 @@
 Manifest-Version: 1.0
-Main-Class: app.client.ClientMain
+Main-Class: org.gladiator.app.client.ClientMain

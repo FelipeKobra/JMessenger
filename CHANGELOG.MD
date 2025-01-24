@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.0.4](https://github.com/FelipeKobra/JMessenger/tree/v0.0.4) - To Release
+## [0.0.4](https://github.com/FelipeKobra/JMessenger/tree/v0.0.4) - January 24, 2025
 
 ### Enhancements
 
@@ -25,7 +25,7 @@
 - Remove IDE specific items from Git
 - Change ExecutorService `execute` to `submit`
 
--- [Commit 4]() --
+-- [Commit 4](https://github.com/FelipeKobra/JMessenger/commit/fbd8e0aeccd9c366e7b51b09de32b435b0dd8bde) --
 
 - Optimize native image
 - Better pom.xml organization
