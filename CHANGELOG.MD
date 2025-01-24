@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.0.5](https://github.com/FelipeKobra/JMessenger/tree/v0.0.5) - To Release
+
+### Bug Fixes
+
+-- [Commit 1]() --
+
+- Removed not necessary pgo executables import to uber jars
+
 ## [0.0.4](https://github.com/FelipeKobra/JMessenger/tree/v0.0.4) - January 24, 2025
 
 ### Enhancements

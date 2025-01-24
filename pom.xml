@@ -6,7 +6,7 @@
     <!-- GAV -->
     <groupId>org.gladiator</groupId>
     <artifactId>JMessenger</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.4</version>
 
     <!-- Maven Properties -->
     <modelVersion>4.0.0</modelVersion>
@@ -52,6 +52,16 @@
                         <filter>
                             <artifact>*:*</artifact>
                             <excludes>
+                                <exclude>**/META-INF/native-image/**</exclude>
+                                <exclude>**/scripts/**</exclude>
+                                <exclude>**/images/**</exclude>
+                                <exclude>**/*.md</exclude>
+                                <exclude>**/*.markdown</exclude>
+                                <exclude>**/*.header</exclude>
+                                <exclude>**/pom.properties</exclude>
+                                <exclude>**/io.netty.versions.properties</exclude>
+                                <exclude>**/*.args</exclude>
+                                <exclude>**/*.so</exclude>
                                 <exclude>module-info.class</exclude>
                                 <exclude>META-INF/*.SF</exclude>
                                 <exclude>META-INF/*.DSA</exclude>
@@ -59,6 +69,7 @@
                                 <exclude>META-INF/LICENSE.txt</exclude>
                                 <exclude>META-INF/MANIFEST.MF</exclude>
                                 <exclude>META-INF/versions/9/module-info.class</exclude>
+                                <exclude>META-INF/module-info.class</exclude>
                             </excludes>
                         </filter>
                     </filters>
@@ -191,32 +202,12 @@
         </dependency>
         <!-- Terminal Section -->
         <dependency>
-            <artifactId>jline-terminal</artifactId>
-            <groupId>org.jline</groupId>
-            <version>${dependency.jline.bundle.version}</version>
-        </dependency>
-        <dependency>
             <artifactId>jline-terminal-jni</artifactId>
             <groupId>org.jline</groupId>
             <version>${dependency.jline.bundle.version}</version>
         </dependency>
         <dependency>
-            <artifactId>jline-native</artifactId>
-            <groupId>org.jline</groupId>
-            <version>${dependency.jline.bundle.version}</version>
-        </dependency>
-        <dependency>
             <artifactId>jline-console</artifactId>
-            <groupId>org.jline</groupId>
-            <version>${dependency.jline.bundle.version}</version>
-        </dependency>
-        <dependency>
-            <artifactId>jline-style</artifactId>
-            <groupId>org.jline</groupId>
-            <version>${dependency.jline.bundle.version}</version>
-        </dependency>
-        <dependency>
-            <artifactId>jline-reader</artifactId>
             <groupId>org.jline</groupId>
             <version>${dependency.jline.bundle.version}</version>
         </dependency>
@@ -263,7 +254,7 @@
                 <skip.native.build>false</skip.native.build>
                 <native.pgo.client.args>--pgo=${native.pgo.client.directory}/default.iprof
                 </native.pgo.client.args>
-                <native.pgo.server.args>--pgo=${native.pgo.client.directory}/default.iprof
+                <native.pgo.server.args>--pgo=${native.pgo.server.directory}/default.iprof
                 </native.pgo.server.args>
             </properties>
         </profile>
@@ -276,7 +267,7 @@
                     -o ${native.pgo.client.directory}/Client-PGO
                 </native.pgo.client.args>
                 <native.pgo.server.args>--pgo-instrument
-                    -o ${native.pgo.client.directory}/Server-PGO
+                    -o ${native.pgo.server.directory}/Server-PGO
                 </native.pgo.server.args>
             </properties>
         </profile>
@@ -295,7 +286,7 @@
 
         <!--  Native Section  -->
         <native.maven.plugin.version>0.10.4</native.maven.plugin.version>
-        <native.pgo.directory>src/main/resources/META-INF/native-image/pgo</native.pgo.directory>
+        <native.pgo.directory>src/assets/pgo</native.pgo.directory>
         <native.pgo.server.directory>${native.pgo.directory}/server</native.pgo.server.directory>
         <native.pgo.client.directory>${native.pgo.directory}/client</native.pgo.client.directory>
         <native.build.args/>

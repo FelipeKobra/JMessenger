@@ -151,7 +151,7 @@ To create PGO executables for even better performance on production, follow thes
     .\mvnw -pnative-pgo-build clean package
    ```
 
-This will generate the PGO instruments in the `src/main/resources/META-INF/native-image/pgo`
+This will generate the PGO instruments in the `src/assets/pgo`
 directory
 and their respective folders.
 
