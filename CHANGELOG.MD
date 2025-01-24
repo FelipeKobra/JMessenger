@@ -19,11 +19,16 @@
 
 ### Bug Fixes
 
--- [Commit 3]() --
+-- [Commit 3](https://github.com/FelipeKobra/JMessenger/commit/6c32b08407b495269b8c2a40904aeb52825453ef) --
 
 - Fix project folder structure
 - Remove IDE specific items from Git
 - Change ExecutorService `execute` to `submit`
+
+-- [Commit 4]() --
+
+- Optimize native image
+- Better pom.xml organization
 
 ## [0.0.3](https://github.com/FelipeKobra/JMessenger/tree/v0.0.3) - January 17, 2025
 

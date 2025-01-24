@@ -1,300 +1,319 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="http://maven.apache.org/POM/4.0.0"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <artifactId>JMessenger</artifactId>
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
+    <!-- GAV -->
+    <groupId>org.gladiator</groupId>
+    <artifactId>JMessenger</artifactId>
+    <version>0.0.3</version>
 
-  <build>
-    <plugins>
-      <!-- Check Code Style-->
-      <plugin>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <configuration>
-          <configLocation>google_checks.xml</configLocation>
-          <failsOnError>true</failsOnError>
-          <includeTestSourceDirectory>true</includeTestSourceDirectory>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <id>validate</id>
-            <phase>validate</phase>
-          </execution>
-        </executions>
-        <groupId>org.apache.maven.plugins</groupId>
-        <version>3.6.0</version>
-      </plugin>
-      <!-- Create Application Jars -->
-      <plugin>
-        <artifactId>maven-shade-plugin</artifactId>
-        <configuration>
-          <filters>
-            <filter>
-              <artifact>*:*</artifact>
-              <excludes>
-                <exclude>module-info.class</exclude>
-                <exclude>META-INF/*.SF</exclude>
-                <exclude>META-INF/*.DSA</exclude>
-                <exclude>META-INF/*.RSA</exclude>
-                <exclude>META-INF/LICENSE.txt</exclude>
-                <exclude>META-INF/MANIFEST.MF</exclude>
-                <exclude>META-INF/versions/9/module-info.class</exclude>
-              </excludes>
-            </filter>
-          </filters>
-        </configuration>
-        <executions>
-          <!-- Server JAR-->
-          <execution>
-            <configuration>
-              <finalName>Server</finalName>
-              <outputDirectory>${project.artifacts.directory}</outputDirectory>
-              <transformers>
-                <transformer
-                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>app.server.ServerMain</mainClass>
-                </transformer>
-              </transformers>
-            </configuration>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <id>shade-server-main</id>
-            <phase>package</phase>
-          </execution>
-          <!-- Client JAR-->
-          <execution>
-            <configuration>
-              <finalName>Client</finalName>
-              <outputDirectory>${project.artifacts.directory}</outputDirectory>
-              <transformers>
-                <transformer
-                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>app.client.ClientMain</mainClass>
-                </transformer>
-              </transformers>
-            </configuration>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <id>shade-client-main</id>
-            <phase>package</phase>
-          </execution>
-        </executions>
-        <groupId>org.apache.maven.plugins</groupId>
-        <version>3.6.0</version>
-      </plugin>
-      <!-- Create Windows Native Images -->
-      <plugin>
-        <artifactId>native-maven-plugin</artifactId>
-        <configuration>
-          <outputDirectory>${project.artifacts.directory}</outputDirectory>
-          <skip>${native.build.skip}</skip>
-        </configuration>
-        <executions>
-          <!-- Server EXE -->
-          <execution>
-            <configuration>
-              <buildArgs>
-                ${native.build.args}
-                ${native.pgo.server.args}
-              </buildArgs>
-              <imageName>Server</imageName>
-              <mainClass>app.server.ServerMain</mainClass>
-            </configuration>
-            <goals>
-              <goal>compile-no-fork</goal>
-            </goals>
-            <id>build-native-server</id>
-            <phase>package</phase>
-          </execution>
-          <!-- Client EXE -->
-          <execution>
-            <configuration>
-              <buildArgs>
-                ${native.build.args}
-                ${native.pgo.client.args}
-              </buildArgs>
-              <imageName>Client</imageName>
-              <mainClass>app.client.ClientMain</mainClass>
-            </configuration>
-            <goals>
-              <goal>compile-no-fork</goal>
-            </goals>
-            <id>build-native-client</id>
-            <phase>package</phase>
-          </execution>
-        </executions>
-        <groupId>org.graalvm.buildtools</groupId>
-        <version>${native.maven.plugin.version}</version>
-      </plugin>
-      <!-- Artifacts SHA-256 Hashes -->
-      <plugin>
-        <artifactId>exec-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <configuration>
-              <arguments>
-                <argument>-NoProfile</argument>
-                <argument>-Command</argument>
-                <argument>
-                  &quot;src/main/resources/scripts/artifacts-hashing.ps1&quot;
-                </argument>
-              </arguments>
-              <executable>powershell</executable>
-            </configuration>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <phase>package</phase>
-          </execution>
-        </executions>
-        <groupId>org.codehaus.mojo</groupId>
-        <version>3.5.0</version>
-      </plugin>
-    </plugins>
-    <sourceDirectory>src/main/java</sourceDirectory>
-  </build>
-  <dependencies>
-    <!-- General Section -->
-    <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
-    <dependency>
-      <artifactId>commons-lang3</artifactId>
-      <groupId>org.apache.commons</groupId>
-      <version>3.17.0</version>
-    </dependency>
-    <!-- Networking Section -->
-    <!-- https://mvnrepository.com/artifact/com.sshtools/porter -->
-    <dependency>
-      <artifactId>porter</artifactId>
-      <groupId>com.sshtools</groupId>
-      <version>1.0.2</version>
-    </dependency>
-    <!-- Terminal Section -->
-    <!-- https://mvnrepository.com/artifact/org.jline/jline-terminal -->
-    <dependency>
-      <artifactId>jline-terminal</artifactId>
-      <groupId>org.jline</groupId>
-      <version>${jline.bundle.version}</version>
-    </dependency>
-    <!-- https://mvnrepository.com/artifact/org.jline/jline-terminal-jni -->
-    <dependency>
-      <artifactId>jline-terminal-jni</artifactId>
-      <groupId>org.jline</groupId>
-      <version>${jline.bundle.version}</version>
-    </dependency>
-    <!-- https://mvnrepository.com/artifact/org.jline/jline-native -->
-    <dependency>
-      <artifactId>jline-native</artifactId>
-      <groupId>org.jline</groupId>
-      <version>${jline.bundle.version}</version>
-    </dependency>
-    <!-- https://mvnrepository.com/artifact/org.jline/jline-console -->
-    <dependency>
-      <artifactId>jline-console</artifactId>
-      <groupId>org.jline</groupId>
-      <version>${jline.bundle.version}</version>
-    </dependency>
-    <!-- https://mvnrepository.com/artifact/org.jline/jline-style -->
-    <dependency>
-      <artifactId>jline-style</artifactId>
-      <groupId>org.jline</groupId>
-      <version>${jline.bundle.version}</version>
-    </dependency>
-    <!-- https://mvnrepository.com/artifact/org.jline/jline-reader -->
-    <dependency>
-      <artifactId>jline-reader</artifactId>
-      <groupId>org.jline</groupId>
-      <version>${jline.bundle.version}</version>
-    </dependency>
-    <!-- Logging Section -->
-    <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
-    <dependency>
-      <artifactId>slf4j-api</artifactId>
-      <groupId>org.slf4j</groupId>
-      <version>2.0.16</version>
-    </dependency>
-    <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-core -->
-    <dependency>
-      <artifactId>logback-core</artifactId>
-      <groupId>ch.qos.logback</groupId>
-      <version>1.5.16</version>
-    </dependency>
-    <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
-    <dependency>
-      <artifactId>logback-classic</artifactId>
-      <groupId>ch.qos.logback</groupId>
-      <version>1.5.16</version>
-    </dependency>
-  </dependencies>
-  <description>Robust and efficient chatUtils designed for terminal-based communication
-  </description>
+    <!-- Maven Properties -->
+    <modelVersion>4.0.0</modelVersion>
+    <packaging>jar</packaging>
 
-  <!-- Organization Config -->
-  <groupId>org.gladiator</groupId>
-  <inceptionYear>2025</inceptionYear>
-  <modelVersion>4.0.0</modelVersion>
-  <organization>
-    <name>org.gladiator</name>
-  </organization>
+    <!-- Organization Properties -->
+    <inceptionYear>2025</inceptionYear>
+    <organization>
+        <name>org.gladiator</name>
+    </organization>
+    <description>Robust and efficient chatUtils designed for terminal-based communication
+    </description>
 
+    <build>
+        <plugins>
+            <!-- Check Code Style-->
+            <plugin>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <configuration>
+                    <skip>${skip.checkstyle}</skip>
+                    <configLocation>google_checks.xml</configLocation>
+                    <failsOnError>true</failsOnError>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <id>validate</id>
+                        <phase>validate</phase>
+                    </execution>
+                </executions>
+                <groupId>org.apache.maven.plugins</groupId>
+                <version>3.6.0</version>
+            </plugin>
+            <!-- Create Application Jars -->
+            <plugin>
+                <artifactId>maven-shade-plugin</artifactId>
+                <configuration>
+                    <skip>${skip.jar.build}</skip>
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>module-info.class</exclude>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                                <exclude>META-INF/LICENSE.txt</exclude>
+                                <exclude>META-INF/MANIFEST.MF</exclude>
+                                <exclude>META-INF/versions/9/module-info.class</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                </configuration>
+                <executions>
+                    <!-- Server JAR-->
+                    <execution>
+                        <configuration>
+                            <finalName>Server</finalName>
+                            <outputDirectory>${project.artifacts.directory}</outputDirectory>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>${project.main.server}</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <id>shade-server-main</id>
+                        <phase>package</phase>
+                    </execution>
+                    <!-- Client JAR-->
+                    <execution>
+                        <configuration>
+                            <finalName>Client</finalName>
+                            <outputDirectory>${project.artifacts.directory}</outputDirectory>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>${project.main.client}</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <id>shade-client-main</id>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+                <groupId>org.apache.maven.plugins</groupId>
+                <version>3.6.0</version>
+            </plugin>
+            <!-- Create Windows Native Images -->
+            <plugin>
+                <artifactId>native-maven-plugin</artifactId>
+                <configuration>
+                    <outputDirectory>${project.artifacts.directory}</outputDirectory>
+                    <skip>${skip.native.build}</skip>
+                </configuration>
+                <executions>
+                    <!-- Server EXE -->
+                    <execution>
+                        <configuration>
+                            <buildArgs>
+                                ${native.build.args}
+                                ${native.pgo.server.args}
+                            </buildArgs>
+                            <imageName>Server</imageName>
+                            <mainClass>${project.main.server}</mainClass>
+                        </configuration>
+                        <goals>
+                            <goal>compile-no-fork</goal>
+                        </goals>
+                        <id>build-native-server</id>
+                        <phase>package</phase>
+                    </execution>
+                    <!-- Client EXE -->
+                    <execution>
+                        <configuration>
+                            <buildArgs>
+                                ${native.build.args}
+                                ${native.pgo.client.args}
+                            </buildArgs>
+                            <imageName>Client</imageName>
+                            <mainClass>${project.main.client}</mainClass>
+                        </configuration>
+                        <goals>
+                            <goal>compile-no-fork</goal>
+                        </goals>
+                        <id>build-native-client</id>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+                <groupId>org.graalvm.buildtools</groupId>
+                <version>${native.maven.plugin.version}</version>
+            </plugin>
+            <!-- Artifacts SHA-256 Hashes -->
+            <plugin>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <configuration>
+                            <arguments>
+                                <argument>-NoProfile</argument>
+                                <argument>-Command</argument>
+                                <argument>
+                                    &quot;src/main/resources/scripts/artifacts-hashing.ps1&quot;
+                                </argument>
+                            </arguments>
+                            <executable>powershell</executable>
+                        </configuration>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+                <groupId>org.codehaus.mojo</groupId>
+                <version>3.5.0</version>
+            </plugin>
+        </plugins>
 
-  <!-- Native Image Build Profiles-->
-  <profiles>
-    <profile>
-      <id>native-dev</id>
-      <properties>
-        <native.build.args>-Ob</native.build.args>
-        <native.build.skip>false</native.build.skip>
-      </properties>
-    </profile>
-    <profile>
-      <id>native-prod</id>
-      <properties>
-        <native.build.args>-O3</native.build.args>
-        <native.build.skip>false</native.build.skip>
-      </properties>
-    </profile>
-    <profile>
-      <id>native-prod-pgo</id>
-      <properties>
-        <native.build.skip>false</native.build.skip>
-        <native.pgo.client.args>--pgo=${native.pgo.directory}/client/default.iprof
-        </native.pgo.client.args>
-        <native.pgo.server.args>--pgo=${native.pgo.directory}/server/default.iprof
-        </native.pgo.server.args>
-      </properties>
-    </profile>
-    <profile>
-      <id>native-pgo-build</id>
-      <properties>
-        <native.build.skip>false</native.build.skip>
-        <native.pgo.client.args>--pgo-instrument
-          -o ${native.pgo.directory}/client/Client-PGO
-        </native.pgo.client.args>
-        <native.pgo.server.args>--pgo-instrument
-          -o ${native.pgo.directory}/server/Server-PGO
-        </native.pgo.server.args>
-      </properties>
-    </profile>
-  </profiles>
+    </build>
 
-  <properties>
-    <jline.bundle.version>3.28.0</jline.bundle.version>
-    <maven.compiler.release>21</maven.compiler.release>
-    <native.build.args/>
-    <native.build.skip>true</native.build.skip>
-    <native.maven.plugin.version>0.10.4</native.maven.plugin.version>
-    <native.pgo.client.args/>
-    <native.pgo.directory>src/main/resources/META-INF/native-image/pgo</native.pgo.directory>
-    <native.pgo.server.args/>
-    <project.artifacts.directory>target/artifacts</project.artifacts.directory>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
+    <dependencies>
+        <!-- General Section -->
+        <dependency>
+            <artifactId>commons-lang3</artifactId>
+            <groupId>org.apache.commons</groupId>
+            <version>${dependency.commons.lang.version}</version>
+        </dependency>
+        <!-- Networking Section -->
+        <dependency>
+            <artifactId>porter</artifactId>
+            <groupId>com.sshtools</groupId>
+            <version>${dependency.porter.version}</version>
+        </dependency>
+        <!-- Terminal Section -->
+        <dependency>
+            <artifactId>jline-terminal</artifactId>
+            <groupId>org.jline</groupId>
+            <version>${dependency.jline.bundle.version}</version>
+        </dependency>
+        <dependency>
+            <artifactId>jline-terminal-jni</artifactId>
+            <groupId>org.jline</groupId>
+            <version>${dependency.jline.bundle.version}</version>
+        </dependency>
+        <dependency>
+            <artifactId>jline-native</artifactId>
+            <groupId>org.jline</groupId>
+            <version>${dependency.jline.bundle.version}</version>
+        </dependency>
+        <dependency>
+            <artifactId>jline-console</artifactId>
+            <groupId>org.jline</groupId>
+            <version>${dependency.jline.bundle.version}</version>
+        </dependency>
+        <dependency>
+            <artifactId>jline-style</artifactId>
+            <groupId>org.jline</groupId>
+            <version>${dependency.jline.bundle.version}</version>
+        </dependency>
+        <dependency>
+            <artifactId>jline-reader</artifactId>
+            <groupId>org.jline</groupId>
+            <version>${dependency.jline.bundle.version}</version>
+        </dependency>
+        <!-- Logging Section -->
+        <dependency>
+            <artifactId>slf4j-api</artifactId>
+            <groupId>org.slf4j</groupId>
+            <version>${dependency.slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <artifactId>logback-core</artifactId>
+            <groupId>ch.qos.logback</groupId>
+            <version>${dependency.logback.bundle.version}</version>
+        </dependency>
+        <dependency>
+            <artifactId>logback-classic</artifactId>
+            <groupId>ch.qos.logback</groupId>
+            <version>${dependency.logback.bundle.version}</version>
+        </dependency>
+    </dependencies>
 
-  <version>0.0.3</version>
+    <!-- Native Image Build Profiles -->
+    <profiles>
+        <!-- Profile for fast building during development-->
+        <profile>
+            <id>native-dev</id>
+            <properties>
+                <native.build.args>-Ob</native.build.args>
+                <skip.native.build>false</skip.native.build>
+            </properties>
+        </profile>
+        <!-- Creates an optimized application without PGO Optimization-->
+        <profile>
+            <id>native-prod</id>
+            <properties>
+                <native.build.args>-O3</native.build.args>
+                <skip.native.build>false</skip.native.build>
+            </properties>
+        </profile>
+        <!-- Uses the PGO Profiles made by the PGO Artifacts to optimize the application -->
+        <profile>
+            <id>native-prod-pgo</id>
+            <properties>
+                <skip.native.build>false</skip.native.build>
+                <native.pgo.client.args>--pgo=${native.pgo.client.directory}/default.iprof
+                </native.pgo.client.args>
+                <native.pgo.server.args>--pgo=${native.pgo.client.directory}/default.iprof
+                </native.pgo.server.args>
+            </properties>
+        </profile>
+        <!-- Creates the PGO Artifacts-->
+        <profile>
+            <id>native-pgo-build</id>
+            <properties>
+                <skip.native.build>false</skip.native.build>
+                <native.pgo.client.args>--pgo-instrument
+                    -o ${native.pgo.client.directory}/Client-PGO
+                </native.pgo.client.args>
+                <native.pgo.server.args>--pgo-instrument
+                    -o ${native.pgo.client.directory}/Server-PGO
+                </native.pgo.server.args>
+            </properties>
+        </profile>
+    </profiles>
+
+    <properties>
+        <!-- Maven Section -->
+        <maven.compiler.release>21</maven.compiler.release>
+        <sourceDirectory>src/main/java</sourceDirectory>
+
+        <!--  Project Section  -->
+        <project.artifacts.directory>${project.build.directory}/artifacts</project.artifacts.directory>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.main.client>${project.groupId}.app.client.ClientMain</project.main.client>
+        <project.main.server>${project.groupId}.app.server.ServerMain</project.main.server>
+
+        <!--  Native Section  -->
+        <native.maven.plugin.version>0.10.4</native.maven.plugin.version>
+        <native.pgo.directory>src/main/resources/META-INF/native-image/pgo</native.pgo.directory>
+        <native.pgo.server.directory>${native.pgo.directory}/server</native.pgo.server.directory>
+        <native.pgo.client.directory>${native.pgo.directory}/client</native.pgo.client.directory>
+        <native.build.args/>
+        <native.pgo.server.args/>
+        <native.pgo.client.args/>
+
+        <!-- Dependencies Section -->
+        <dependency.jline.bundle.version>3.28.0</dependency.jline.bundle.version>
+        <dependency.logback.bundle.version>1.5.16</dependency.logback.bundle.version>
+        <dependency.commons.lang.version>3.17.0</dependency.commons.lang.version>
+        <dependency.porter.version>1.0.2</dependency.porter.version>
+        <dependency.slf4j.version>2.0.16</dependency.slf4j.version>
+
+        <!-- Skip Plugins Section -->
+        <skip.checkstyle>false</skip.checkstyle>
+        <skip.jar.build>false</skip.jar.build>
+        <skip.native.build>true</skip.native.build>
+        <skip.artifacts.hashing>false</skip.artifacts.hashing>
+    </properties>
 
 </project>
