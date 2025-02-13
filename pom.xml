@@ -52,8 +52,6 @@
     <plugin.maven.compiler>3.11.0</plugin.maven.compiler>
     <plugin.errorprone>2.36.0</plugin.errorprone>
     <plugin.nullaway>0.10.15</plugin.nullaway>
-    <plugin.maven.release>3.1.1</plugin.maven.release>
-    <plugin.conventional.release>1.0.7</plugin.conventional.release>
     <plugin.checkstyle>3.6.0</plugin.checkstyle>
     <plugin.spotbugs>4.8.6.6</plugin.spotbugs>
     <plugin.conventional.changelog>2.2.0</plugin.conventional.changelog>
@@ -94,37 +92,6 @@
               <version>${plugin.nullaway}</version>
             </path>
           </annotationProcessorPaths>
-        </configuration>
-      </plugin>
-      <!-- Maven Release with Conventional Commits -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>${plugin.maven.release}</version>
-        <dependencies>
-          <dependency>
-            <groupId>nl.basjes.maven.release</groupId>
-            <artifactId>conventional-commits-version-policy</artifactId>
-            <version>${plugin.conventional.release}</version>
-          </dependency>
-        </dependencies>
-        <configuration>
-          <projectVersionPolicyId>ConventionalCommitsVersionPolicy</projectVersionPolicyId>
-          <projectVersionPolicyConfig>
-            <versionTag>^v([0-9]+\.[0-9]+\.[0-9]+)$</versionTag>
-            <majorRules>
-              <majorRule>^[a-zA-Z]+(?:\([a-zA-Z0-9_-]+\))?!: .*$</majorRule>
-              <majorRule>^BREAKING CHANGE:.*$</majorRule>
-            </majorRules>
-            <minorRules>
-              <minorRule>^feat(?:\([a-zA-Z0-9_-]+\))?: .*$</minorRule>
-            </minorRules>
-
-            <patchRules>
-              <patchRule>^fix(?:\([a-zA-Z0-9_-]+\))?: .*$</patchRule>
-            </patchRules>
-
-          </projectVersionPolicyConfig>
         </configuration>
       </plugin>
       <!-- Check Code Style-->
