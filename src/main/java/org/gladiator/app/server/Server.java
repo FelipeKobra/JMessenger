@@ -3,11 +3,13 @@ package org.gladiator.app.server;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -26,8 +28,6 @@ import org.gladiator.app.util.PortMapper;
 import org.gladiator.app.util.connection.Connection;
 import org.gladiator.app.util.connection.ConnectionMessage;
 import org.gladiator.app.util.connection.ConnectionMessageUtils;
-import org.gladiator.app.util.io.SocketIo;
-import org.gladiator.app.util.io.SocketIoAsyncFactory;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.UserInterruptException;
 import org.slf4j.Logger;
@@ -69,7 +69,7 @@ public final class Server implements AutoCloseable {
     final ChatUtils chatUtils = ChatUtils.create(">");
     try {
       final ServerConfig serverConfig = new ServerConfigFactory(chatUtils).create();
-      final ExecutorService executor = NamedVirtualThreadExecutorFactory.create("Jorge");
+      final ExecutorService executor = NamedVirtualThreadExecutorFactory.create("Server");
       final ServerSocket serverSocket = createServerSocket(serverConfig.port(), chatUtils);
 
       server = new Server(serverConfig, serverSocket, chatUtils, executor);
@@ -97,13 +97,11 @@ public final class Server implements AutoCloseable {
     try {
       serverSocket = ServerSocketFactory.getDefault().createServerSocket(port);
     } catch (final BindException e) {
-      LOGGER.debug("Port already in use", e);
       chatUtils.displayOnScreen(
           "Address already in use, check if you have another server opened in the same port");
-      throw new EndApplicationException(e);
+      throw new EndApplicationException("Port already in use" + e);
     } catch (final IOException e) {
-      LOGGER.error("Error creating Server Socket", e);
-      throw new EndApplicationException(e);
+      throw new EndApplicationException("Error creating Server Socket" + e);
     }
     return serverSocket;
   }
@@ -136,20 +134,18 @@ public final class Server implements AutoCloseable {
     LOGGER.debug("Listening to connections...");
 
     while (!serverSocket.isClosed() && serverSocket.isBound()) {
-      final Socket clientSocket;
-      try {
-        clientSocket = serverSocket.accept();
+      try (final Socket clientSocket = serverSocket.accept()) {
 
-        final SocketIo socketIo = SocketIoAsyncFactory.create(clientSocket, executor);
-        final PrintWriter writer = socketIo.getWriter();
-        final BufferedReader reader = socketIo.getReader();
+        final PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true,
+            StandardCharsets.UTF_8);
+        final BufferedReader reader = new BufferedReader(
+            new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
 
         final String clientName = exchangeNames(writer, reader);
 
         chatUtils.showNewMessage("User " + clientName + " Connected");
 
-        final Connection clientConnection = new Connection(clientName, clientSocket, reader,
-            writer);
+        final Connection clientConnection = new Connection(clientName, clientSocket);
         clientConnections.add(clientConnection);
 
         receiveMessages(reader, clientConnection);
@@ -198,7 +194,7 @@ public final class Server implements AutoCloseable {
     final List<CompletableFuture<Void>> futures = new ArrayList<>();
     for (final Connection connection : clientConnections) {
       final CompletableFuture<Void> future = CompletableFuture.runAsync(
-          () -> connection.getOutput().println(msg), executor);
+          () -> connection.writeOutput(msg), executor);
       futures.add(future);
     }
     CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
@@ -213,7 +209,7 @@ public final class Server implements AutoCloseable {
   private void receiveMessages(final BufferedReader reader, final Connection clientConnection) {
     final String clientName = clientConnection.getName();
 
-    executor.submit(() -> {
+    executor.execute(() -> {
       try {
         processMessages(reader, clientConnection);
       } catch (final UncheckedIOException e) {
@@ -244,9 +240,17 @@ public final class Server implements AutoCloseable {
    * @param connection The connection to the client that sent the message.
    */
   private void sendToOtherConnections(final ConnectionMessage msg, final Connection connection) {
-    clientConnections.stream().filter(Predicate.not(connection::equals)).forEach(
-        otherConnection -> CompletableFuture.runAsync(
-            () -> otherConnection.getOutput().println(msg.toRawString()), executor));
+    clientConnections.stream()
+        .filter(Predicate.not(connection::equals))
+        .forEach(otherConnection -> {
+          final CompletableFuture<Void> sendMessageFuture = CompletableFuture.runAsync(
+              () -> otherConnection.writeOutput(msg.toRawString()), executor);
+          sendMessageFuture.exceptionally(ex -> {
+            LOGGER.error("Error writing output to connection", ex);
+            return null;
+          });
+        });
+
   }
 
   /**

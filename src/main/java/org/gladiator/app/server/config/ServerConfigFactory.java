@@ -1,6 +1,7 @@
 package org.gladiator.app.server.config;
 
 
+import java.util.Locale;
 import org.apache.commons.lang3.Validate;
 import org.gladiator.app.util.ChatUtils;
 import org.gladiator.environment.Port;
@@ -36,7 +37,7 @@ public class ServerConfigFactory {
     String isCustom;
 
     isCustom = chatUtils.getUserInput("Want to change the default settings? y/N: ");
-    isCustom = isCustom.toUpperCase();
+    isCustom = isCustom.toUpperCase(Locale.ROOT);
 
     return "Y".equals(isCustom) ? createCustom() : createDefault();
   }

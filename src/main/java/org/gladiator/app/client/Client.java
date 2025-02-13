@@ -3,11 +3,14 @@ package org.gladiator.app.client;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import javax.net.SocketFactory;
@@ -17,8 +20,6 @@ import org.gladiator.app.exception.EndApplicationException;
 import org.gladiator.app.util.ChatUtils;
 import org.gladiator.app.util.NamedVirtualThreadExecutorFactory;
 import org.gladiator.app.util.connection.ConnectionMessageUtils;
-import org.gladiator.app.util.io.SocketIo;
-import org.gladiator.app.util.io.SocketIoAsyncFactory;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.UserInterruptException;
 import org.slf4j.Logger;
@@ -68,6 +69,7 @@ public final class Client implements AutoCloseable {
       handleException(ChatUtils.USER_INTERRUPT_MESSAGE, e);
     }
 
+    Objects.requireNonNull(client);
     return client;
   }
 
@@ -98,6 +100,8 @@ public final class Client implements AutoCloseable {
     } catch (final IOException e) {
       handleException("Error connecting to server", e);
     }
+
+    Objects.requireNonNull(clientSocket);
     return clientSocket;
   }
 
@@ -140,25 +144,30 @@ public final class Client implements AutoCloseable {
    * @throws EndApplicationException if an error occurs during client execution
    */
   public void run() throws EndApplicationException {
-    final SocketIo socketIo = SocketIoAsyncFactory.create(socket, executor);
+    try {
+      final BufferedReader reader = new BufferedReader(
+          new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+      final PrintWriter writer = new PrintWriter(socket.getOutputStream(), true,
+          StandardCharsets.UTF_8);
 
-    final BufferedReader reader = socketIo.getReader();
-    final PrintWriter writer = socketIo.getWriter();
+      final String serverName = exchangeNames(writer, reader);
 
-    final String serverName = exchangeNames(writer, reader);
+      chatUtils.prettyPrint("Connection Established with " + serverName);
 
-    chatUtils.prettyPrint("Connection Established with " + serverName);
+      chatUtils.displayOnScreen("Type `quit` to exit");
 
-    chatUtils.displayOnScreen("Type `quit` to exit");
+      final CompletableFuture<Void> receiveMessagesFuture = CompletableFuture.runAsync(
+          () -> receiveMessages(reader), executor);
 
-    final CompletableFuture<Void> receiveMessagesFuture = CompletableFuture.runAsync(
-        () -> receiveMessages(reader), executor);
+      final CompletableFuture<Void> sendMessagesFuture = CompletableFuture.runAsync(
+          () -> sendMessages(writer), executor);
 
-    final CompletableFuture<Void> sendMessagesFuture = CompletableFuture.runAsync(
-        () -> sendMessages(writer), executor);
+      CompletableFuture.allOf(receiveMessagesFuture, sendMessagesFuture).join();
+      reconnectPrompt();
+    } catch (final IOException e) {
+      throw new EndApplicationException("Error creating Socket IO" + e);
+    }
 
-    CompletableFuture.allOf(receiveMessagesFuture, sendMessagesFuture).join();
-    reconnectPrompt();
   }
 
   /**

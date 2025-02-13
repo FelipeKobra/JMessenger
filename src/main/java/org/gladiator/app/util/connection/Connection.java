@@ -2,10 +2,11 @@ package org.gladiator.app.util.connection;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Objects;
 import org.apache.commons.lang3.Validate;
 import org.gladiator.app.server.Server;
 import org.slf4j.Logger;
@@ -22,7 +23,6 @@ public final class Connection implements AutoCloseable {
   private static final Logger LOGGER = LoggerFactory.getLogger(Connection.class);
 
   private final String name;
-  private final Socket socket;
   private final BufferedReader input;
   private final PrintWriter output;
 
@@ -30,24 +30,20 @@ public final class Connection implements AutoCloseable {
   /**
    * Constructs a new Connection.
    *
-   * @param name   The name of the client.
-   * @param socket The socket for the connection.
-   * @param input  The input stream for the connection.
-   * @param output The output stream for the connection.
+   * @param name         The name of the client.
+   * @param clientSocket The socket for the connection.
    * @throws NullPointerException     if any of the parameters are null.
    * @throws IllegalArgumentException if the name is blank.
    */
-  public Connection(final String name, final Socket socket, final BufferedReader input,
-      final PrintWriter output) {
+  public Connection(final String name, final Socket clientSocket) throws IOException {
     Validate.notBlank(name);
-    Objects.requireNonNull(socket);
-    Objects.requireNonNull(input);
-    Objects.requireNonNull(output);
     this.name = name;
-    this.socket = socket;
-    this.input = input;
-    this.output = output;
+    this.input = new BufferedReader(
+        new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
+    this.output = new PrintWriter(clientSocket.getOutputStream(), true,
+        StandardCharsets.UTF_8);
   }
+
 
   /**
    * Removes this connection from the list of connections and closes it.
@@ -64,8 +60,13 @@ public final class Connection implements AutoCloseable {
     return name;
   }
 
-  public PrintWriter getOutput() {
-    return output;
+  /**
+   * Writes a message to the output stream.
+   *
+   * @param message the message to write to the output stream
+   */
+  public void writeOutput(final String message) {
+    output.println(message);
   }
 
   /**
@@ -78,7 +79,6 @@ public final class Connection implements AutoCloseable {
     try {
       output.close();
       input.close();
-      socket.close();
     } catch (final IOException e) {
       LOGGER.error("Error closing the connection: {}", e, e);
     }
