@@ -110,6 +110,21 @@
         </dependencies>
         <configuration>
           <projectVersionPolicyId>ConventionalCommitsVersionPolicy</projectVersionPolicyId>
+          <projectVersionPolicyConfig>
+            <versionTag>^v([0-9]+\.[0-9]+\.[0-9]+)$</versionTag>
+            <majorRules>
+              <majorRule>^[a-zA-Z]+(?:\([a-zA-Z0-9_-]+\))?!: .*$</majorRule>
+              <majorRule>^BREAKING CHANGE:.*$</majorRule>
+            </majorRules>
+            <minorRules>
+              <minorRule>^feat(?:\([a-zA-Z0-9_-]+\))?: .*$</minorRule>
+            </minorRules>
+
+            <patchRules>
+              <patchRule>^fix(?:\([a-zA-Z0-9_-]+\))?: .*$</patchRule>
+            </patchRules>
+
+          </projectVersionPolicyConfig>
         </configuration>
       </plugin>
       <!-- Check Code Style-->
