@@ -3,8 +3,6 @@ out/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-src/**/pgo/client/**
-src/**/pgo/server/**
 
 ### IntelliJ IDEA ###
 .idea

@@ -21,7 +21,6 @@ the internet. It supports both client and server functionalities, making it easy
 - [Building Natives](#building-natives)
     - [Development](#development)
     - [Production](#production)
-    - [PGO](#pgo-profile-guided-optimization)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -139,34 +138,6 @@ To create a slow build, but optimized application, run the following command:
 
    ```bash
     .\mvnw -Pnative-prod clean package
-   ```
-
-### PGO (Profile-Guided Optimization)
-
-To create PGO executables for even better performance on production, follow these steps:
-
-**1 - Create the PGO Instruments**
-
-   ```bash
-    .\mvnw -pnative-pgo-build clean package
-   ```
-
-This will generate the PGO instruments in the `src/assets/pgo`
-directory
-and their respective folders.
-
-**2 - Execute the PGO Instruments**
-
-1. Run the PGO instruments.
-2. Interact with the application to generate profiling data.
-3. Close the application.
-
-**3 - Create the production file with PGO**
-
-Run the following command to create the production files with PGO:
-
-   ```bash
-    .\mvnw -pnative-prod-pgo clean package
    ```
 
 ## Contributing

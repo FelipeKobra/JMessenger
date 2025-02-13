@@ -32,12 +32,7 @@
     <project.main.server>${project.groupId}.app.server.ServerMain</project.main.server>
 
     <!--  Native Section  -->
-    <native.pgo.directory>src/assets/pgo</native.pgo.directory>
-    <native.pgo.server.directory>${native.pgo.directory}/server</native.pgo.server.directory>
-    <native.pgo.client.directory>${native.pgo.directory}/client</native.pgo.client.directory>
     <native.build.args/>
-    <native.pgo.server.args/>
-    <native.pgo.client.args/>
 
     <!-- Dependencies Section -->
     <dependency.jline.bundle.version>3.29.0</dependency.jline.bundle.version>
@@ -266,7 +261,6 @@
             <configuration>
               <buildArgs>
                 ${native.build.args}
-                ${native.pgo.server.args}
               </buildArgs>
               <imageName>Server</imageName>
               <mainClass>${project.main.server}</mainClass>
@@ -282,7 +276,6 @@
             <configuration>
               <buildArgs>
                 ${native.build.args}
-                ${native.pgo.client.args}
               </buildArgs>
               <imageName>Client</imageName>
               <mainClass>${project.main.client}</mainClass>
@@ -387,30 +380,6 @@
       <properties>
         <native.build.args>-O3</native.build.args>
         <skip.native.build>false</skip.native.build>
-      </properties>
-    </profile>
-    <!-- Uses the PGO Profiles made by the PGO Artifacts to optimize the application -->
-    <profile>
-      <id>native-prod-pgo</id>
-      <properties>
-        <skip.native.build>false</skip.native.build>
-        <native.pgo.client.args>--pgo=${native.pgo.client.directory}/default.iprof
-        </native.pgo.client.args>
-        <native.pgo.server.args>--pgo=${native.pgo.server.directory}/default.iprof
-        </native.pgo.server.args>
-      </properties>
-    </profile>
-    <!-- Creates the PGO Artifacts-->
-    <profile>
-      <id>native-pgo-build</id>
-      <properties>
-        <skip.native.build>false</skip.native.build>
-        <native.pgo.client.args>--pgo-instrument
-          -o ${native.pgo.client.directory}/Client-PGO
-        </native.pgo.client.args>
-        <native.pgo.server.args>--pgo-instrument
-          -o ${native.pgo.server.directory}/Server-PGO
-        </native.pgo.server.args>
       </properties>
     </profile>
   </profiles>
