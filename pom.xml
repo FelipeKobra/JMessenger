@@ -6,7 +6,7 @@
   <!-- GAV -->
   <groupId>org.gladiator</groupId>
   <artifactId>JMessenger</artifactId>
-  <version>0.0.4</version>
+  <version>0.0.4-SNAPSHOT</version>
 
   <!-- Maven Properties -->
   <modelVersion>4.0.0</modelVersion>
@@ -167,14 +167,14 @@
 
 {{#tags}}
 {{#ifReleaseTag .}}
-## [{{name}}](https://gitservice/{{name}}) ({{tagDate .}})
+## [{{name}}](https://github.com/FelipeKobra/JMessenger/commits/{{name}}) ({{tagDate .}})
 
   {{#ifContainsType commits type='feat'}}
 ### Features
 
     {{#commits}}
       {{#ifCommitType . type='feat'}}
- - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://gitservice/commit/{{hashFull}}))
+ - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://github.com/FelipeKobra/JMessenger/commits/{{hashFull}}))
       {{/ifCommitType}}
     {{/commits}}
   {{/ifContainsType}}
@@ -184,7 +184,7 @@
 
     {{#commits}}
       {{#ifCommitType . type='fix'}}
- - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://gitservice/commit/{{hashFull}}))
+ - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://github.com/FelipeKobra/JMessenger/commits/{{hashFull}}))
       {{/ifCommitType}}
     {{/commits}}
   {{/ifContainsType}}
@@ -432,5 +432,11 @@
       </properties>
     </profile>
   </profiles>
+
+  <scm>
+    <connection>scm:git:https://github.com/FelipeKobra/JMessenger.git</connection>
+    <developerConnection>scm:git:https://github.com/FelipeKobra/JMessenger.git</developerConnection>
+    <url>https://github.com/FelipeKobra/JMessenger</url>
+  </scm>
 
 </project>
