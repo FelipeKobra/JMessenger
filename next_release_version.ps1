@@ -11,7 +11,7 @@ $commits = git log --since="$versao_atual" --reverse --format=%s
 
 foreach ($commit in $commits)
 {
-    if ($commit -match "^BREAKING")
+    if ($commit -match "BREAKING|^\w+!")
     {
         $major += 1
         $minor = 0
