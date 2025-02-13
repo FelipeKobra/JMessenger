@@ -46,6 +46,7 @@ public final class ChatUtils implements AutoCloseable {
     }
 
     Objects.requireNonNull(terminal);
+    Objects.requireNonNull(lineReader);
     terminal.enterRawMode();
     terminal.echo(true);
 
