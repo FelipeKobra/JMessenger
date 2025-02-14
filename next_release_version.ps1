@@ -10,11 +10,11 @@ $minor = [int]$minor
 $patch = [int]$patch
 
 $range = "$actual_version_with_prefix..@"
-$commits = git log $range --reverse --format=%s
+$commits = git log $range --reverse --format=%s%b
 
 foreach ($commit in $commits)
 {
-    if ($commit -match "BREAKING|^\w+!")
+    if ($commit -cmatch "BREAKING CHANGE|^\w+!")
     {
         if ($dev)
         {
