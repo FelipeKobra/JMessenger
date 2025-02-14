@@ -1,7 +1,9 @@
+param (
+    [switch]$dev
+)
+
 $versao_atual = git describe --tags --abbrev=0
-
 $versao_atual = $versao_atual -replace '^v', ''
-
 $major, $minor, $patch = $versao_atual -split '\.'
 $major = [int]$major
 $minor = [int]$minor
@@ -13,9 +15,17 @@ foreach ($commit in $commits)
 {
     if ($commit -match "BREAKING|^\w+!")
     {
-        $major += 1
-        $minor = 0
-        $patch = 0
+        if ($dev)
+        {
+            $minor += 1
+            $patch = 0
+        }
+        else
+        {
+            $major += 1
+            $minor = 0
+            $patch = 0
+        }
     }
     elseif ($commit -match "^feat")
     {
