@@ -1,6 +1,17 @@
 # Changelog
 
-## [0.1.1](https://github.com/FelipeKobra/JMessenger/commits/0.1.1) (2025-02-13)
+## [v0.4.0](https://github.com/FelipeKobra/JMessenger/commits/v0.4.0) (2025-02-14)
+
+### Features
+
+ -  Add development parameter on next release script ([c4eea630d22429c](https://github.com/FelipeKobra/JMessenger/commits/c4eea630d22429cda5244283050f25a09b679c3e))
+
+### Bug Fixes
+
+ -  Next release script now gives correct breaking change version ([d826a33e4229306](https://github.com/FelipeKobra/JMessenger/commits/d826a33e42293060428b44fe05e31810a1d19851))
+ -  Remove not necessary PGO native images ([798d1ba1a4c2f16](https://github.com/FelipeKobra/JMessenger/commits/798d1ba1a4c2f1609363f4974158d083ea0cd2d1))
+
+## [v0.1.1](https://github.com/FelipeKobra/JMessenger/commits/v0.1.1) (2025-02-13)
 
 ### Features
 

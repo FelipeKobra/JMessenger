@@ -6,7 +6,7 @@
   <!-- GAV -->
   <groupId>org.gladiator</groupId>
   <artifactId>JMessenger</artifactId>
-  <version>0.1.1</version>
+  <version>0.4.0</version>
 
   <!-- Maven Properties -->
   <modelVersion>4.0.0</modelVersion>
@@ -262,7 +262,7 @@
               <buildArgs>
                 ${native.build.args}
               </buildArgs>
-              <imageName>Server</imageName>
+              <imageName>Server_Windows_x64</imageName>
               <mainClass>${project.main.server}</mainClass>
             </configuration>
             <goals>
@@ -277,7 +277,7 @@
               <buildArgs>
                 ${native.build.args}
               </buildArgs>
-              <imageName>Client</imageName>
+              <imageName>Client_Windows_x64</imageName>
               <mainClass>${project.main.client}</mainClass>
             </configuration>
             <goals>
@@ -370,7 +370,7 @@
     <profile>
       <id>native-dev</id>
       <properties>
-        <native.build.args>-Ob</native.build.args>
+        <native.build.args>-Ob -march=native</native.build.args>
         <skip.native.build>false</skip.native.build>
       </properties>
     </profile>
@@ -378,7 +378,7 @@
     <profile>
       <id>native-prod</id>
       <properties>
-        <native.build.args>-O3</native.build.args>
+        <native.build.args>-O3 -march=compatibility</native.build.args>
         <skip.native.build>false</skip.native.build>
       </properties>
     </profile>
