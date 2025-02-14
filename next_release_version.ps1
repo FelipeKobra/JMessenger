@@ -2,14 +2,15 @@ param (
     [switch]$dev
 )
 
-$versao_atual = git describe --tags --abbrev=0
-$versao_atual = $versao_atual -replace '^v', ''
-$major, $minor, $patch = $versao_atual -split '\.'
+$actual_version_with_prefix = git describe --tags --abbrev=0
+$actual_version = $actual_version_with_prefix -replace '^v', ''
+$major, $minor, $patch = $actual_version -split '\.'
 $major = [int]$major
 $minor = [int]$minor
 $patch = [int]$patch
 
-$commits = git log --since="$versao_atual" --reverse --format=%s
+$range = "$actual_version_with_prefix..@"
+$commits = git log $range --reverse --format=%s
 
 foreach ($commit in $commits)
 {
