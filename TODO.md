@@ -13,8 +13,6 @@
 
 - [ ] Notify clients when someone connects/disconnects
 - [ ] Better warning when server not found on client instead of throwing an exception
-- [X] Make user terminal automatically support UTF8 Characters
-- [x] Disable Debug on native-image
 
 ## Administration
 
