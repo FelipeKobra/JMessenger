@@ -2,14 +2,26 @@ param (
     [switch]$dev
 )
 
-$actual_version_with_prefix = git describe --tags --abbrev=0
-$actual_version = $actual_version_with_prefix -replace '^v', ''
-$major, $minor, $patch = $actual_version -split '\.'
-$major = [int]$major
-$minor = [int]$minor
-$patch = [int]$patch
+$tags = git tag --list
 
-$range = "$actual_version_with_prefix..@"
+if ($null -eq $tags -or $tags.Count -eq 0)
+{
+    $major = 0
+    $minor = 0
+    $patch = 0
+    $range = ""
+}
+else
+{
+    $actual_version_with_prefix = git describe --tags --abbrev=0
+    $actual_version = $actual_version_with_prefix -replace '^v', ''
+    $major, $minor, $patch = $actual_version -split '\.'
+    $major = [int]$major
+    $minor = [int]$minor
+    $patch = [int]$patch
+    $range = "$actual_version_with_prefix..@"
+}
+
 $commits = git log $range --reverse --format=%s%b
 
 foreach ($commit in $commits)
