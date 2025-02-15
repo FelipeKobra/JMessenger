@@ -42,8 +42,16 @@ foreach ($commit in $commits)
     }
     elseif ($commit -match "^feat")
     {
-        $minor += 1
-        $patch = 0
+        if ($dev)
+        {
+            $patch += 1
+        }
+        else
+        {
+            $minor += 1
+            $patch = 0
+        }
+
     }
     elseif ($commit -match "^fix")
     {
