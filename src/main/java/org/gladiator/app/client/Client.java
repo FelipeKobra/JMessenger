@@ -57,7 +57,7 @@ public final class Client implements AutoCloseable {
   public static Client createClient(final ChatUtils chatUtils)
       throws EndApplicationException {
 
-    Client client = null;
+    final Client client;
     try {
       final ClientConfig clientConfig = new ClientConfigProvider(
           chatUtils).createClientConfig();
@@ -67,7 +67,7 @@ public final class Client implements AutoCloseable {
 
       client = new Client(clientConfig, socket, executor, chatUtils);
     } catch (final UserInterruptException | EndOfFileException e) {
-      handleException(ChatUtils.USER_INTERRUPT_MESSAGE, e);
+      throw new EndApplicationException(e);
     }
 
     Objects.requireNonNull(client);
@@ -129,18 +129,6 @@ public final class Client implements AutoCloseable {
     throw new EndApplicationException(exception);
   }
 
-  /**
-   * Handles exceptions by logging the message and throwing an EndApplicationException.
-   *
-   * @param logMessage the message to log
-   * @param exception  the exception to handle
-   * @throws EndApplicationException the wrapped exception
-   */
-  private static void handleException(final String logMessage, final Exception exception)
-      throws EndApplicationException {
-    LOGGER.debug(logMessage, exception);
-    throw new EndApplicationException(exception);
-  }
 
   /**
    * Runs the client by establishing a connection, exchanging names with the server, and handling
