@@ -176,8 +176,10 @@ public final class Server implements AutoCloseable {
           break;
         }
 
-        final String msg = ConnectionMessageUtils.toRawString(serverConfig.name(), line);
-        broadcastMessageToConnections(msg);
+        if (!line.isBlank()) {
+          final String msg = ConnectionMessageUtils.toRawString(serverConfig.name(), line);
+          broadcastMessageToConnections(msg);
+        }
         line = chatUtils.getUserInput();
       }
     } catch (final EndOfFileException | UserInterruptException e) {

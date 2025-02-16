@@ -196,8 +196,10 @@ public final class Client implements AutoCloseable {
           break;
         }
 
-        final String msg = ConnectionMessageUtils.toRawString(config.name(), line);
-        writer.println(msg);
+        if (!line.isBlank()) {
+          final String msg = ConnectionMessageUtils.toRawString(config.name(), line);
+          writer.println(msg);
+        }
         line = chatUtils.getUserInput();
       }
     } catch (final EndOfFileException | UserInterruptException e) {
