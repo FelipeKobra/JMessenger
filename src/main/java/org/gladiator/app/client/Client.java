@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.net.ConnectException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -97,8 +98,12 @@ public final class Client implements AutoCloseable {
     } catch (final ConnectException e) {
       handleException(chatUtils, "Connection time out with server",
           "Timed out when trying to connect to server: " + serverAddress, e);
+    } catch (final SocketException e) {
+      handleException(chatUtils, "Invalid Server IP Address",
+          "Server address not valid: " + serverAddress, e);
     } catch (final IOException e) {
-      handleException("Error connecting to server", e);
+      handleException(chatUtils, "Error connecting to server",
+          "Error during connection with server: " + serverAddress, e);
     }
 
     Objects.requireNonNull(clientSocket);

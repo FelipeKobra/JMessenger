@@ -12,7 +12,7 @@
 ## Basic
 
 - [ ] Notify clients when someone connects/disconnects
-- [ ] Better warning when server not found on client instead of throwing an exception
+- [X] Better warning when server not found on client instead of throwing an exception
 
 ## Administration
 
