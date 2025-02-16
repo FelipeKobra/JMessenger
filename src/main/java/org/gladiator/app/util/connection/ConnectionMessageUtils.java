@@ -21,7 +21,7 @@ public final class ConnectionMessageUtils {
    */
   public static ConnectionMessage fromRawString(final String message) {
     Validate.notBlank(message);
-    Validate.matchesPattern(message, "([\\w\\s]*),(.*)");
+    Validate.matchesPattern(message, "(.+),(.*)");
     final String[] split = StringUtils.split(message, ",", 2);
     return new ConnectionMessage(split[0], split[1]);
   }

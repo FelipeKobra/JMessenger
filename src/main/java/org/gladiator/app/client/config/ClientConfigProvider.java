@@ -39,6 +39,7 @@ public final class ClientConfigProvider {
     while (name.isBlank()) {
       name = chatUtils.getUserInput("Choose your name: ");
     }
+    name = name.trim();
     return name;
   }
 

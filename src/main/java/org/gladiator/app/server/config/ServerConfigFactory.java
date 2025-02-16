@@ -50,6 +50,7 @@ public class ServerConfigFactory {
       chatUtils.displayOnScreen("Leave the field blank for the default setting");
 
       serverName = getCustomConfig("Server Name", ServerConfig.getDefaultName());
+      serverName = serverName.trim();
       serverPort = Integer.parseInt(
           getCustomConfig("Server Port", String.valueOf(Port.PORT_DEFAULT)));
       Validate.inclusiveBetween(Port.PORT_MIN, Port.PORT_MAX, serverPort);
