@@ -2,10 +2,8 @@ package org.gladiator.app.util.connection;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.apache.commons.lang3.Validate;
 import org.gladiator.app.server.Server;
@@ -25,6 +23,7 @@ public final class Connection implements AutoCloseable {
   private final String name;
   private final BufferedReader input;
   private final PrintWriter output;
+  private final Socket clientSocket;
 
 
   /**
@@ -35,13 +34,13 @@ public final class Connection implements AutoCloseable {
    * @throws NullPointerException     if any of the parameters are null.
    * @throws IllegalArgumentException if the name is blank.
    */
-  public Connection(final String name, final Socket clientSocket) throws IOException {
+  public Connection(final String name, final BufferedReader reader, final PrintWriter writer,
+      final Socket clientSocket) {
     Validate.notBlank(name);
     this.name = name;
-    this.input = new BufferedReader(
-        new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
-    this.output = new PrintWriter(clientSocket.getOutputStream(), true,
-        StandardCharsets.UTF_8);
+    this.input = reader;
+    this.output = writer;
+    this.clientSocket = clientSocket;
   }
 
 
@@ -79,6 +78,7 @@ public final class Connection implements AutoCloseable {
     try {
       output.close();
       input.close();
+      clientSocket.close();
     } catch (final IOException e) {
       LOGGER.error("Error closing the connection: {}", e, e);
     }

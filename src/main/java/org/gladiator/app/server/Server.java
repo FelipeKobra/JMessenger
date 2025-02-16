@@ -134,7 +134,8 @@ public final class Server implements AutoCloseable {
     LOGGER.debug("Listening to connections...");
 
     while (!serverSocket.isClosed() && serverSocket.isBound()) {
-      try (final Socket clientSocket = serverSocket.accept()) {
+      try {
+        final Socket clientSocket = serverSocket.accept();
 
         final PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true,
             StandardCharsets.UTF_8);
@@ -145,7 +146,8 @@ public final class Server implements AutoCloseable {
 
         chatUtils.showNewMessage("User " + clientName + " Connected");
 
-        final Connection clientConnection = new Connection(clientName, clientSocket);
+        final Connection clientConnection = new Connection(clientName, reader, writer,
+            clientSocket);
         clientConnections.add(clientConnection);
 
         receiveMessages(reader, clientConnection);
@@ -213,7 +215,7 @@ public final class Server implements AutoCloseable {
       try {
         processMessages(reader, clientConnection);
       } catch (final UncheckedIOException e) {
-        LOGGER.debug("Connection with {} ended abruptly", clientName);
+        LOGGER.debug("Connection with {} ended abruptly", clientName, e);
       } finally {
         closeConnection(clientConnection, clientName);
       }
