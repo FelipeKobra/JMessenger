@@ -1,5 +1,20 @@
 # Changelog
 
+## [v0.5.8](https://github.com/FelipeKobra/JMessenger/commits/v0.5.8) (2025-02-16)
+
+### Features
+
+ -  create InputValidator ([793e3551889dd59](https://github.com/FelipeKobra/JMessenger/commits/793e3551889dd59419acf2699218257802db7c2d))
+ -  add max user inputs max size ([946e139b6771b2c](https://github.com/FelipeKobra/JMessenger/commits/946e139b6771b2cf7128fbf8b9dd3d00cabb15a0))
+ -  add better and default options to ask for user inputs ([aafd8d7d6b44a31](https://github.com/FelipeKobra/JMessenger/commits/aafd8d7d6b44a31cd88afccf305549490bb51312))
+
+### Bug Fixes
+
+ -  blank messages now are not sent to the other users ([e419a381fb925d5](https://github.com/FelipeKobra/JMessenger/commits/e419a381fb925d5e08e13663b0ffb95f4c1639d7))
+ -  fix user input model on ChatUtils ([bb6e493f4a6f224](https://github.com/FelipeKobra/JMessenger/commits/bb6e493f4a6f224b18a6f39637e54b30436c892e))
+ -  fix Regex error when non ascii character on client name ([a53054c175a9cdf](https://github.com/FelipeKobra/JMessenger/commits/a53054c175a9cdf73232b473780bc2339e553041))
+ -  fix UPnP port not opening ([56cf45f634eab89](https://github.com/FelipeKobra/JMessenger/commits/56cf45f634eab896e7059205b2b926e83666de62))
+
 ## [v0.5.1](https://github.com/FelipeKobra/JMessenger/commits/v0.5.1) (2025-02-16)
 
 
