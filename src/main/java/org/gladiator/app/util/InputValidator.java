@@ -21,7 +21,7 @@ public final class InputValidator {
    *
    * @param userName the username to validate
    * @return {@code true} if the username is not empty, not null, and does not exceed the maximum
-   * length; {@code false} otherwise
+   *     length; {@code false} otherwise
    */
   public static boolean isUserNameNotValid(final String userName) {
     return "".equals(userName) || null == userName || USER_NAME_MAX_LENGTH < userName.length();
