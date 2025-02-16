@@ -23,7 +23,9 @@ public final class ConnectionMessageUtils {
     Validate.notBlank(message);
     Validate.matchesPattern(message, "(.+),(.*)");
     final String[] split = StringUtils.split(message, ",", 2);
-    return new ConnectionMessage(split[0], split[1]);
+    final String first = split[0];
+    final String second = 1 < split.length ? split[1] : StringUtils.defaultIfEmpty(null, "");
+    return new ConnectionMessage(first, second);
   }
 
   /**

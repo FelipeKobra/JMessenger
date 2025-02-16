@@ -1,10 +1,11 @@
 package org.gladiator.app.server.config;
 
+import static org.gladiator.app.util.InputValidator.USER_NAME_MAX_LENGTH;
+
 import java.util.Locale;
 import org.apache.commons.lang3.Validate;
 import org.gladiator.app.util.ChatUtils;
 import org.gladiator.app.util.InputValidator;
-import static org.gladiator.app.util.InputValidator.USER_NAME_MAX_LENGTH;
 import org.gladiator.environment.Port;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +52,7 @@ public class ServerConfigFactory {
         serverDefaultName, USER_NAME_MAX_LENGTH);
     serverName = serverName.trim();
 
-    if (!InputValidator.isUserNameValid(serverName)) {
+    if (InputValidator.isUserNameNotValid(serverName)) {
       LOGGER.error("Server name has more than " + USER_NAME_MAX_LENGTH
           + " characters, using default name");
       serverName = serverDefaultName;

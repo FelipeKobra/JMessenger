@@ -1,9 +1,10 @@
 package org.gladiator.app.client.config;
 
+import static org.gladiator.app.util.InputValidator.USER_NAME_MAX_LENGTH;
+
 import org.gladiator.app.exception.EndApplicationException;
 import org.gladiator.app.util.ChatUtils;
 import org.gladiator.app.util.InputValidator;
-import static org.gladiator.app.util.InputValidator.USER_NAME_MAX_LENGTH;
 import org.gladiator.environment.Port;
 
 /**
@@ -42,7 +43,7 @@ public final class ClientConfigProvider {
         "Choose your name [max size: " + USER_NAME_MAX_LENGTH + " chars]: ");
     name = name.trim();
 
-    if (!InputValidator.isUserNameValid(name)) {
+    if (InputValidator.isUserNameNotValid(name)) {
       chatUtils.displayOnScreen("The username is not valid");
       throw new EndApplicationException("User name not valid");
     }
