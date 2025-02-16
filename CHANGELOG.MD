@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.5.1](https://github.com/FelipeKobra/JMessenger/commits/v0.5.1) (2025-02-16)
+
+
+### Bug Fixes
+
+ -  fix client not connecting ([47569b48cbd9604](https://github.com/FelipeKobra/JMessenger/commits/47569b48cbd960488d9eb64cdf49a67eb84c139a))
+ -  add better warning to user when server address not found ([d7629e1b0eddb21](https://github.com/FelipeKobra/JMessenger/commits/d7629e1b0eddb2177d78e6cb0cfb7de9f42b717c))
+ -  More specific check on breaking changes ([f7e178fc644da16](https://github.com/FelipeKobra/JMessenger/commits/f7e178fc644da161d8ec19eda87bfd8005cb15ef))
+ -  Fix next release script to only check commits since last tag ([1bdd095dfce75be](https://github.com/FelipeKobra/JMessenger/commits/1bdd095dfce75be9d62940ffbac687fa174d726c))
+
 ## [v0.4.0](https://github.com/FelipeKobra/JMessenger/commits/v0.4.0) (2025-02-14)
 
 ### Features
