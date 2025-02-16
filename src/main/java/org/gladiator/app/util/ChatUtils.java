@@ -101,9 +101,30 @@ public final class ChatUtils implements AutoCloseable {
    * @return The user input.
    */
   public String askUserOption(final String optionName, final String defaultOption) {
-    return getUserInput(
+    String userInput = getUserInput(
         "Type the " + optionName + " (" + defaultOption + "):");
+
+    if (userInput.isBlank()) {
+      userInput = defaultOption;
+    }
+
+    return userInput;
   }
+
+  /**
+   * Asks the user for an option with a default value and a maximum option length.
+   *
+   * @param optionName      The name of the option.
+   * @param defaultOption   The default value for the option.
+   * @param maxOptionLength The maximum length of the option.
+   * @return The user input.
+   */
+  public String askUserOption(final String optionName, final String defaultOption,
+      final int maxOptionLength) {
+    return askUserOption("Type the " + optionName + " [max size: " + maxOptionLength + "]" + " ("
+        + defaultOption + "):", defaultOption);
+  }
+
 
   /**
    * Prints a string with a decorative border.
@@ -113,7 +134,7 @@ public final class ChatUtils implements AutoCloseable {
   public void prettyPrint(final String str) {
     final String division = "=".repeat(str.length());
 
-    System.out.println(System.lineSeparator() + division);
+    displayOnScreen(System.lineSeparator() + division);
     displayOnScreen(str);
     displayOnScreen(division + System.lineSeparator());
   }
