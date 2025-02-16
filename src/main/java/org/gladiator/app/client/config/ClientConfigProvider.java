@@ -1,7 +1,9 @@
 package org.gladiator.app.client.config;
 
-
+import org.gladiator.app.exception.EndApplicationException;
 import org.gladiator.app.util.ChatUtils;
+import org.gladiator.app.util.InputValidator;
+import static org.gladiator.app.util.InputValidator.USER_NAME_MAX_LENGTH;
 import org.gladiator.environment.Port;
 
 /**
@@ -25,7 +27,7 @@ public final class ClientConfigProvider {
    *
    * @return a new ClientConfig instance with the user's input
    */
-  public ClientConfig createClientConfig() {
+  public ClientConfig createClientConfig() throws EndApplicationException {
 
     final String clientName = receiveName();
     final String serverAddress = receiveAddress();
@@ -34,12 +36,16 @@ public final class ClientConfigProvider {
     return new ClientConfig(clientName, serverAddress, serverPort);
   }
 
-  private String receiveName() {
-    String name = "";
-    while (name.isBlank()) {
-      name = chatUtils.getUserInput("Choose your name: ");
-    }
+  private String receiveName() throws EndApplicationException {
+    String name;
+    name = chatUtils.getUserInput(
+        "Choose your name [max size: " + USER_NAME_MAX_LENGTH + " chars]: ");
     name = name.trim();
+
+    if (!InputValidator.isUserNameValid(name)) {
+      chatUtils.displayOnScreen("The username is not valid");
+      throw new EndApplicationException("User name not valid");
+    }
     return name;
   }
 

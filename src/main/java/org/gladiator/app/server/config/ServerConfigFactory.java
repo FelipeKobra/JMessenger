@@ -1,9 +1,10 @@
 package org.gladiator.app.server.config;
 
-
 import java.util.Locale;
 import org.apache.commons.lang3.Validate;
 import org.gladiator.app.util.ChatUtils;
+import org.gladiator.app.util.InputValidator;
+import static org.gladiator.app.util.InputValidator.USER_NAME_MAX_LENGTH;
 import org.gladiator.environment.Port;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,17 +43,28 @@ public class ServerConfigFactory {
     return "Y".equals(isCustom) ? createCustom() : createDefault();
   }
 
-  private ServerConfig createCustom() {
-    String serverName = "";
+  private String getCustomName() {
+    String serverName;
+
+    final String serverDefaultName = ServerConfig.getDefaultName();
+    serverName = chatUtils.askUserOption("Server Name",
+        serverDefaultName, USER_NAME_MAX_LENGTH);
+    serverName = serverName.trim();
+
+    if (!InputValidator.isUserNameValid(serverName)) {
+      LOGGER.error("Server name has more than " + USER_NAME_MAX_LENGTH
+          + " characters, using default name");
+      serverName = serverDefaultName;
+    }
+
+    return serverName;
+  }
+
+  private int getCustomPort() {
     int serverPort;
-
     try {
-      chatUtils.displayOnScreen("Leave the field blank for the default setting");
-
-      serverName = getCustomConfig("Server Name", ServerConfig.getDefaultName());
-      serverName = serverName.trim();
       serverPort = Integer.parseInt(
-          getCustomConfig("Server Port", String.valueOf(Port.PORT_DEFAULT)));
+          chatUtils.askUserOption("Server Port", String.valueOf(Port.PORT_DEFAULT)));
       Validate.inclusiveBetween(Port.PORT_MIN, Port.PORT_MAX, serverPort);
 
     } catch (final NumberFormatException e) {
@@ -63,18 +75,19 @@ public class ServerConfigFactory {
       serverPort = Port.PORT_DEFAULT;
     }
 
+    return serverPort;
+  }
+
+  private ServerConfig createCustom() {
+
+    chatUtils.displayOnScreen("Leave the field blank for the default setting");
+    final String serverName = getCustomName();
+    final int serverPort = getCustomPort();
+
     return new ServerConfig(serverName, serverPort);
   }
 
   private ServerConfig createDefault() {
     return new ServerConfig();
-  }
-
-  private String getCustomConfig(final String configName, final String defaultConfig) {
-    String config = chatUtils.askUserOption(configName, defaultConfig);
-    if (config.isBlank()) {
-      config = defaultConfig;
-    }
-    return config;
   }
 }
