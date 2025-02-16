@@ -6,6 +6,7 @@ import com.sshtools.porter.UPnP.Gateway;
 import com.sshtools.porter.UPnP.Protocol;
 import java.io.UncheckedIOException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +51,7 @@ public final class PortMapper implements AutoCloseable {
 
     executor.execute(() -> {
       try {
-        discovery.gateway().ifPresent(portMapper::setGateway);
+        portMapper.setGateway(discovery.gateway().orElse(null));
       } catch (final IllegalStateException | UncheckedIOException e) {
         LOGGER.debug(DISCOVERY_PROCESS_INTERRUPTED, e);
       }
@@ -65,15 +66,15 @@ public final class PortMapper implements AutoCloseable {
   public void openPort() {
     executor.execute(() -> {
       try {
-        if (null == gateway) {
-          discovery.awaitCompletion();
+        while (null == gateway) {
+          discovery.awaitCompletion(1000, TimeUnit.MILLISECONDS);
         }
-        if (null != gateway) {
-          final boolean mapped = gateway.map(mappedPort, protocol);
-          if (mapped) {
-            LOGGER.debug("Port {} mapped with success", mappedPort);
-          }
+
+        final boolean mapped = gateway.map(mappedPort, protocol);
+        if (mapped) {
+          LOGGER.debug("Port {} mapped with success", mappedPort);
         }
+
       } catch (final IllegalStateException | UncheckedIOException e) {
         LOGGER.debug(DISCOVERY_PROCESS_INTERRUPTED, e);
       }
