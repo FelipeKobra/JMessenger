@@ -121,8 +121,8 @@ public final class ChatUtils implements AutoCloseable {
    */
   public String askUserOption(final String optionName, final String defaultOption,
       final int maxOptionLength) {
-    return askUserOption("Type the " + optionName + " [max size: " + maxOptionLength + "]" + " ("
-        + defaultOption + "):", defaultOption);
+    return askUserOption("Type the " + optionName + " [max size: " + maxOptionLength + "]",
+        defaultOption);
   }
 
 
