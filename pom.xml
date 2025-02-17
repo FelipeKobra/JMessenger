@@ -130,14 +130,24 @@
 
 {{#tags}}
 {{#ifReleaseTag .}}
-## [{{name}}](https://github.com/FelipeKobra/JMessenger/commits/{{name}}) ({{tagDate .}})
+## [{{name}}](https://github.com/{{ownerName}}/{{repoName}}/compare/{{name}}...master) ({{tagDate .}})
+
+  {{#ifContainsBreaking commits}}
+### Breaking changes
+
+    {{#commits}}
+      {{#ifCommitBreaking .}}
+- {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://github.com/{{ownerName}}/{{repoName}}/commit/{{hash}}))
+      {{/ifCommitBreaking}}
+    {{/commits}}
+  {{/ifContainsBreaking}}
 
   {{#ifContainsType commits type='feat'}}
 ### Features
 
     {{#commits}}
       {{#ifCommitType . type='feat'}}
- - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://github.com/FelipeKobra/JMessenger/commits/{{hashFull}}))
+- {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://github.com/{{ownerName}}/{{repoName}}/commit/{{hash}}))
       {{/ifCommitType}}
     {{/commits}}
   {{/ifContainsType}}
@@ -147,7 +157,7 @@
 
     {{#commits}}
       {{#ifCommitType . type='fix'}}
- - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://github.com/FelipeKobra/JMessenger/commits/{{hashFull}}))
+- {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{hash}}](https://github.com/{{ownerName}}/{{repoName}}/commit/{{hash}}))
       {{/ifCommitType}}
     {{/commits}}
   {{/ifContainsType}}
