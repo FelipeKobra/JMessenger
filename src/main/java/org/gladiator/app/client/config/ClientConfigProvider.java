@@ -40,7 +40,7 @@ public final class ClientConfigProvider {
   private String receiveName() throws EndApplicationException {
     String name;
     name = chatUtils.getUserInput(
-        "Choose your name [max size: " + USER_NAME_MAX_LENGTH + " chars]: ");
+        "Choose your name [max size: " + USER_NAME_MAX_LENGTH + "]: ");
     name = name.trim();
 
     if (InputValidator.isUserNameNotValid(name)) {
