@@ -69,7 +69,7 @@ public final class Server implements AutoCloseable {
     final ChatUtils chatUtils = ChatUtils.create(">");
     try {
       final ServerConfig serverConfig = new ServerConfigFactory(chatUtils).create();
-      final ExecutorService executor = NamedVirtualThreadExecutorFactory.create("Server");
+      final ExecutorService executor = NamedVirtualThreadExecutorFactory.create("server");
       final ServerSocket serverSocket = createServerSocket(serverConfig.port(), chatUtils);
 
       server = new Server(serverConfig, serverSocket, chatUtils, executor);
