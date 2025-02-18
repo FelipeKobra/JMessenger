@@ -61,4 +61,5 @@ foreach ($commit in $commits)
 
 $next_version = "$major.$minor.$patch"
 
-Write-Host "Next release version: $next_version"
+Write-Output $next_version
+Exit 0
