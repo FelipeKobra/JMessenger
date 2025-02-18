@@ -29,10 +29,10 @@ public final class ConnectionMessageUtils {
   }
 
   /**
-   * Converts the sender name and content to a raw string format.
+   * Converts the sender name and message to a raw string format.
    *
    * @param senderName The name of the sender.
-   * @param content    The content of the message.
+   * @param content    The message of the message.
    * @return The raw string representation of the message.
    */
   public static String toRawString(final String senderName, final String content) {
