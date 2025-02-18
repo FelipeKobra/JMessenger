@@ -3,7 +3,7 @@ package org.gladiator.app.server.config;
 
 import java.util.Objects;
 import org.apache.commons.lang3.Validate;
-import org.gladiator.environment.Port;
+import org.gladiator.app.environment.Port;
 
 
 /**

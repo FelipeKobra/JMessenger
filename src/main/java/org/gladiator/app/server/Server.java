@@ -22,12 +22,12 @@ import javax.net.ServerSocketFactory;
 import org.gladiator.app.exception.EndApplicationException;
 import org.gladiator.app.server.config.ServerConfig;
 import org.gladiator.app.server.config.ServerConfigFactory;
-import org.gladiator.app.util.ChatUtils;
-import org.gladiator.app.util.NamedVirtualThreadExecutorFactory;
-import org.gladiator.app.util.PortMapper;
+import org.gladiator.app.util.chat.ChatUtils;
 import org.gladiator.app.util.connection.Connection;
 import org.gladiator.app.util.connection.ConnectionMessage;
 import org.gladiator.app.util.connection.ConnectionMessageUtils;
+import org.gladiator.app.util.net.PortMapper;
+import org.gladiator.app.util.thread.NamedVirtualThreadExecutorFactory;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.UserInterruptException;
 import org.slf4j.Logger;
@@ -225,10 +225,11 @@ public final class Server implements AutoCloseable {
   }
 
   /**
-   * Processes messages received from a client.
+   * Processes messages received from a client. This method shows the message on the console and
+   * redirects it to other connected clients.
    *
-   * @param reader     The reader for the client's messages.
-   * @param connection The connection to the client.
+   * @param reader     The BufferedReader to read messages from the client.
+   * @param connection The Connection object representing the client's connection.
    */
   private void processMessages(final BufferedReader reader, final Connection connection) {
     reader.lines().map(ConnectionMessageUtils::fromRawString).forEach(msg -> {

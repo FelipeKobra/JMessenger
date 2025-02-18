@@ -1,12 +1,12 @@
 package org.gladiator.app.server.config;
 
-import static org.gladiator.app.util.InputValidator.USER_NAME_MAX_LENGTH;
+import static org.gladiator.app.util.chat.InputValidator.USER_NAME_MAX_LENGTH;
 
 import java.util.Locale;
 import org.apache.commons.lang3.Validate;
-import org.gladiator.app.util.ChatUtils;
-import org.gladiator.app.util.InputValidator;
-import org.gladiator.environment.Port;
+import org.gladiator.app.environment.Port;
+import org.gladiator.app.util.chat.ChatUtils;
+import org.gladiator.app.util.chat.InputValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -93,7 +93,6 @@ public final class ChatUtils implements AutoCloseable {
    * formatting.
    *
    * @param msg The message to display.
-   * @param msg The message to display.
    */
   public void displayOnScreen(final String msg) {
     terminal.writer().println(msg);
