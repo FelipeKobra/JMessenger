@@ -6,7 +6,7 @@ package org.gladiator.app.util;
 public final class InputValidator {
 
   /**
-   * Maximum length for a user name.
+   * Maximum length for a username.
    */
   public static final int USER_NAME_MAX_LENGTH = 40;
 
