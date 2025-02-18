@@ -1,4 +1,4 @@
-package org.gladiator.app.util;
+package org.gladiator.app.util.chat;
 
 /**
  * Utility class for validating user input.

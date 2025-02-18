@@ -1,4 +1,4 @@
-package org.gladiator.app.util;
+package org.gladiator.app.util.net;
 
 import com.sshtools.porter.UPnP.Discovery;
 import com.sshtools.porter.UPnP.DiscoveryBuilder;
@@ -8,6 +8,7 @@ import java.io.UncheckedIOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.gladiator.app.util.thread.NamedVirtualThreadExecutorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

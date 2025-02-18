@@ -1,4 +1,4 @@
-package org.gladiator.app.util;
+package org.gladiator.app.util.chat;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -29,7 +29,9 @@ public final class ChatUtils implements AutoCloseable {
   }
 
   /**
-   * Creates a new {@link ChatUtils} instance with the specified user prompt.
+   * Creates a new {@link ChatUtils} instance with the specified user prompt. Note that there can
+   * only be one instance of {@link Terminal} in the entire application. Therefore, if you create a
+   * {@link ChatUtils} instance, you must close it before creating another one to avoid conflicts.
    *
    * @param userPrompt The prompt to display to the user.
    * @return A new {@link ChatUtils} instance.
@@ -54,7 +56,7 @@ public final class ChatUtils implements AutoCloseable {
   }
 
   /**
-   * Displays a new message on the screen.
+   * Displays a new chat received message on the screen.
    *
    * @param msg The message to display.
    */
@@ -85,8 +87,12 @@ public final class ChatUtils implements AutoCloseable {
   }
 
   /**
-   * Displays a message on the screen.
+   * Displays a message on the screen. This method should be used as the default for displaying
+   * messages on the console instead of using {@code System.out.println()}. It utilizes the
+   * configured {@link Terminal} with custom properties and behaviors to ensure consistent output
+   * formatting.
    *
+   * @param msg The message to display.
    * @param msg The message to display.
    */
   public void displayOnScreen(final String msg) {
@@ -112,7 +118,8 @@ public final class ChatUtils implements AutoCloseable {
   }
 
   /**
-   * Asks the user for an option with a default value and a maximum option length.
+   * Asks the user for an option with a default value and a maximum option length. Note that the
+   * maximum length is only displayed in the prompt and is not enforced programmatically.
    *
    * @param optionName      The name of the option.
    * @param defaultOption   The default value for the option.
