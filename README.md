@@ -68,10 +68,12 @@ following commands in your console:
 
 There are two main application classes:
 
-1. **ClientMain** (`app.client.ClientMain`): Handles client-side operations, allowing users to send
+1. **ClientMain** (`org.gladiator.app.ClientMain`): Handles client-side operations, allowing users
+   to send
    and receive
    messages.
-2. **ServerMain** (`app.server.ServerMain`): Manages server-side operations, redistributing messages
+2. **ServerMain** (`org.gladiator.app.ServerMain`): Manages server-side operations, redistributing
+   messages
    to connected
    clients.
 

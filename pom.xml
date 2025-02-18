@@ -28,8 +28,8 @@
     <!--  Project Section  -->
     <project.artifacts.directory>${project.build.directory}/artifacts</project.artifacts.directory>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.main.client>${project.groupId}.app.client.ClientMain</project.main.client>
-    <project.main.server>${project.groupId}.app.server.ServerMain</project.main.server>
+    <project.main.client>${project.groupId}.app.ClientMain</project.main.client>
+    <project.main.server>${project.groupId}.app.ServerMain</project.main.server>
 
     <!--  Native Section  -->
     <native.build.args/>
