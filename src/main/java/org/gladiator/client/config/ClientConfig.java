@@ -1,4 +1,4 @@
-package org.gladiator.app.client.config;
+package org.gladiator.client.config;
 
 /**
  * Configuration class for the client. This class holds the client's name, server address, and port

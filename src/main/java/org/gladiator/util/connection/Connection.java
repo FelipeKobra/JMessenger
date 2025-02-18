@@ -1,4 +1,4 @@
-package org.gladiator.app.util.connection;
+package org.gladiator.util.connection;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -6,7 +6,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
 import org.apache.commons.lang3.Validate;
-import org.gladiator.app.server.Server;
+import org.gladiator.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,11 +1,11 @@
-package org.gladiator.app.client.config;
+package org.gladiator.client.config;
 
-import static org.gladiator.app.util.chat.InputValidator.USER_NAME_MAX_LENGTH;
+import static org.gladiator.util.validation.InputValidator.USER_NAME_MAX_LENGTH;
 
-import org.gladiator.app.environment.Port;
-import org.gladiator.app.exception.EndApplicationException;
-import org.gladiator.app.util.chat.ChatUtils;
-import org.gladiator.app.util.chat.InputValidator;
+import org.gladiator.environment.Port;
+import org.gladiator.exception.EndApplicationException;
+import org.gladiator.util.chat.ChatUtils;
+import org.gladiator.util.validation.InputValidator;
 
 /**
  * Provides configuration for the client by interacting with the user to receive input.

@@ -1,8 +1,9 @@
-package org.gladiator.app.client;
+package org.gladiator.app;
 
 
-import org.gladiator.app.exception.EndApplicationException;
-import org.gladiator.app.util.chat.ChatUtils;
+import org.gladiator.client.Client;
+import org.gladiator.exception.EndApplicationException;
+import org.gladiator.util.chat.ChatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

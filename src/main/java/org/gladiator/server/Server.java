@@ -1,4 +1,4 @@
-package org.gladiator.app.server;
+package org.gladiator.server;
 
 
 import java.io.BufferedReader;
@@ -19,15 +19,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import javax.net.ServerSocketFactory;
-import org.gladiator.app.exception.EndApplicationException;
-import org.gladiator.app.server.config.ServerConfig;
-import org.gladiator.app.server.config.ServerConfigFactory;
-import org.gladiator.app.util.chat.ChatUtils;
-import org.gladiator.app.util.connection.Connection;
-import org.gladiator.app.util.connection.ConnectionMessage;
-import org.gladiator.app.util.connection.ConnectionMessageUtils;
-import org.gladiator.app.util.net.PortMapper;
-import org.gladiator.app.util.thread.NamedVirtualThreadExecutorFactory;
+import org.gladiator.exception.EndApplicationException;
+import org.gladiator.server.config.ServerConfig;
+import org.gladiator.server.config.ServerConfigFactory;
+import org.gladiator.util.chat.ChatUtils;
+import org.gladiator.util.connection.Connection;
+import org.gladiator.util.connection.ConnectionMessage;
+import org.gladiator.util.connection.ConnectionMessageUtils;
+import org.gladiator.util.network.PortMapper;
+import org.gladiator.util.thread.NamedVirtualThreadExecutorFactory;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.UserInterruptException;
 import org.slf4j.Logger;

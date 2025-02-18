@@ -1,4 +1,4 @@
-package org.gladiator.app.util.connection;
+package org.gladiator.util.connection;
 
 import java.util.Objects;
 import org.apache.commons.lang3.Validate;

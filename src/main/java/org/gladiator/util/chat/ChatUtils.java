@@ -1,4 +1,4 @@
-package org.gladiator.app.util.chat;
+package org.gladiator.util.chat;
 
 import java.io.IOException;
 import java.util.Objects;

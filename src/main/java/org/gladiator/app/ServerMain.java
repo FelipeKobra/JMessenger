@@ -1,7 +1,8 @@
-package org.gladiator.app.server;
+package org.gladiator.app;
 
 
-import org.gladiator.app.exception.EndApplicationException;
+import org.gladiator.exception.EndApplicationException;
+import org.gladiator.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
