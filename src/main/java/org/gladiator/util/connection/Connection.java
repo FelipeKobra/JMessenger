@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
+import java.util.Objects;
 import org.apache.commons.lang3.Validate;
 import org.gladiator.server.Server;
 import org.slf4j.Logger;
@@ -39,8 +40,9 @@ public final class Connection implements AutoCloseable {
     Validate.notBlank(name);
     this.name = name;
     this.input = reader;
-    this.output = writer;
-    this.clientSocket = clientSocket;
+    this.output = Objects.requireNonNull(writer, "writer parameter on Connection must not be null");
+    this.clientSocket = Objects.requireNonNull(clientSocket,
+        "clientSocket parameter on Connection must not be null");
   }
 
 
