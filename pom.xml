@@ -110,6 +110,20 @@
           </execution>
         </executions>
       </plugin>
+      <!-- Spot Bugs-->
+      <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+        <version>${plugin.spotbugs}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>verify</phase>
+          </execution>
+        </executions>
+      </plugin>
       <!-- Create CHANGELOG based on Git Conventional Commits-->
       <plugin>
         <groupId>se.bjurr.gitchangelog</groupId>
