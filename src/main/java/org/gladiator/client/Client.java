@@ -208,7 +208,7 @@ public final class Client implements AutoCloseable {
   private void receiveMessages(final Connection serverConnection) {
     try {
       serverConnection.readStream()
-          .map(ConnectionMessageFactory::createMessage)
+          .map(ConnectionMessageFactory::createFromString)
           .forEach(chatUtils::showNewMessage);
     } catch (final UncheckedIOException e) {
       LOGGER.debug("The connection with the server has ended");

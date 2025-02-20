@@ -243,7 +243,7 @@ public final class Server implements AutoCloseable {
    * @param connection The Connection object representing the client's connection.
    */
   private void processMessages(final Connection connection) {
-    connection.readStream().map(ConnectionMessageFactory::createMessage).forEach(msg -> {
+    connection.readStream().map(ConnectionMessageFactory::createFromString).forEach(msg -> {
       chatUtils.showNewMessage(msg);
       sendToOtherConnections(msg, connection);
     });

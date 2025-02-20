@@ -21,10 +21,11 @@ public final class ConnectionMessageFactory {
   /**
    * Creates a {@link Message} instance from the given transport message string.
    *
-   * @param transportMessage The transport message string.
+   * @param transportMessage The transport message, it is the string that is sent and received via
+   *                         socket.
    * @return The created {@link Message} instance, or null if the message type is invalid.
    */
-  public static Message createMessage(final String transportMessage) {
+  public static Message createFromString(final String transportMessage) {
     Message message = null;
     try {
       final String messageTypeString = transportMessage.split(MESSAGE_SPLITTER, 2)[0];
