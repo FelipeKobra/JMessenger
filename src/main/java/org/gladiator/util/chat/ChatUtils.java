@@ -76,19 +76,7 @@ public final class ChatUtils implements AutoCloseable {
 
     showBufferedUserPrompt();
   }
-
-
-  /**
-   * Displays a new chat received message on the screen in banner format.
-   *
-   * @param msg The message to display in banner format.
-   */
-  public void showNewMessageWithBanner(final String msg) {
-    cleanLine();
-    displayBanner(msg);
-    showBufferedUserPrompt();
-  }
-
+  
 
   /**
    * Reads user input from the console using the default prompt.
