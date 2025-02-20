@@ -68,7 +68,7 @@ public final class ChatUtils implements AutoCloseable {
 
     cleanLine();
 
-    if (ConnectionMessageType.NEW_CONNECTION == messageType) {
+    if (ConnectionMessageType.SIMPLE != messageType) {
       displayBanner(messageContent);
     } else {
       displayOnScreen(messageContent);

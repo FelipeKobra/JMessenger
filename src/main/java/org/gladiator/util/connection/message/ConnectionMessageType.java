@@ -12,5 +12,7 @@ public enum ConnectionMessageType {
   /**
    * Represents a new connection message type.
    */
-  NEW_CONNECTION
+  NEW_CONNECTION,
+
+  DISCONNECTION
 }

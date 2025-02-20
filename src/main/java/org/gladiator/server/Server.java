@@ -24,6 +24,7 @@ import org.gladiator.server.config.ServerConfigFactory;
 import org.gladiator.util.chat.ChatUtils;
 import org.gladiator.util.connection.Connection;
 import org.gladiator.util.connection.message.ConnectionMessageFactory;
+import org.gladiator.util.connection.message.DisconnectMessage;
 import org.gladiator.util.connection.message.Message;
 import org.gladiator.util.connection.message.NewConnectionMessage;
 import org.gladiator.util.connection.message.SimpleMessage;
@@ -231,7 +232,7 @@ public final class Server implements AutoCloseable {
       } catch (final UncheckedIOException e) {
         LOGGER.debug("Connection with {} ended abruptly", clientName, e);
       } finally {
-        closeConnection(clientConnection, clientName);
+        closeConnection(clientConnection);
       }
     });
   }
@@ -273,13 +274,18 @@ public final class Server implements AutoCloseable {
    * Closes a connection to a client.
    *
    * @param connection The connection to be closed.
-   * @param clientName The name of the client.
    */
-  private void closeConnection(final Connection connection, final String clientName) {
+  private void closeConnection(final Connection connection) {
+    final String clientName = connection.getName();
+
     if (!isClosingManually.get()) {
-      LOGGER.debug("User Disconnected: {}", clientName);
-      chatUtils.showNewMessage("User " + clientName + " Disconnected");
       connection.removeConnection(clientConnections);
+
+      final Message disconnectMessage = new DisconnectMessage(clientName);
+      broadcastMessageToConnections(disconnectMessage);
+      chatUtils.showNewMessage(disconnectMessage);
+
+      LOGGER.debug("User Disconnected: {}", clientName);
     }
   }
 

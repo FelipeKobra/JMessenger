@@ -33,6 +33,7 @@ public final class ConnectionMessageFactory {
       message = switch (messageType) {
         case SIMPLE -> SimpleMessage.fromTransportString(transportMessage);
         case NEW_CONNECTION -> NewConnectionMessage.fromTransportString(transportMessage);
+        case DISCONNECTION -> DisconnectMessage.fromTransportString(transportMessage);
       };
     } catch (final IllegalArgumentException e) {
       LOGGER.debug("Type of received message out of pattern: {}", transportMessage, e);
