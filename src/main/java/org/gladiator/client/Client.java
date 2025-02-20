@@ -18,6 +18,7 @@ import javax.net.SocketFactory;
 import org.gladiator.client.config.ClientConfig;
 import org.gladiator.client.config.ClientConfigProvider;
 import org.gladiator.exception.EndApplicationException;
+import org.gladiator.exception.InvalidMessageException;
 import org.gladiator.util.chat.ChatUtils;
 import org.gladiator.util.connection.Connection;
 import org.gladiator.util.connection.message.ConnectionMessageFactory;
@@ -208,7 +209,15 @@ public final class Client implements AutoCloseable {
   private void receiveMessages(final Connection serverConnection) {
     try {
       serverConnection.readStream()
-          .map(ConnectionMessageFactory::createFromString)
+          .map(transportMessage -> {
+            try {
+              return ConnectionMessageFactory.createFromString(transportMessage);
+            } catch (final InvalidMessageException e) {
+              LOGGER.debug(InvalidMessageException.DEFAULT_PROMPT, e);
+              return null;
+            }
+          })
+          .filter(Objects::nonNull)
           .forEach(chatUtils::showNewMessage);
     } catch (final UncheckedIOException e) {
       LOGGER.debug("The connection with the server has ended");

@@ -2,15 +2,13 @@ package org.gladiator.util.connection.message;
 
 import static org.gladiator.util.connection.message.Message.MESSAGE_SPLITTER;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.gladiator.exception.InvalidMessageException;
 
 /**
  * Factory class for creating {@link Message} instances from transport messages.
  */
 public final class ConnectionMessageFactory {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionMessageFactory.class);
 
   /**
    * Private constructor to prevent instantiation.
@@ -25,20 +23,19 @@ public final class ConnectionMessageFactory {
    *                         socket.
    * @return The created {@link Message} instance, or null if the message type is invalid.
    */
-  public static Message createFromString(final String transportMessage) {
-    Message message = null;
+  public static Message createFromString(final String transportMessage)
+      throws InvalidMessageException {
     try {
       final String messageTypeString = transportMessage.split(MESSAGE_SPLITTER, 2)[0];
       final ConnectionMessageType messageType = ConnectionMessageType.valueOf(messageTypeString);
-      message = switch (messageType) {
+      return switch (messageType) {
         case SIMPLE -> SimpleMessage.fromTransportString(transportMessage);
         case NEW_CONNECTION -> NewConnectionMessage.fromTransportString(transportMessage);
         case DISCONNECTION -> DisconnectMessage.fromTransportString(transportMessage);
       };
     } catch (final IllegalArgumentException e) {
-      LOGGER.debug("Type of received message out of pattern: {}", transportMessage, e);
+      throw new InvalidMessageException(transportMessage, e);
     }
-    return message;
   }
 
 }

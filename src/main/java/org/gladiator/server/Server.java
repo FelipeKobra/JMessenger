@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import javax.net.ServerSocketFactory;
 import org.gladiator.exception.EndApplicationException;
+import org.gladiator.exception.InvalidMessageException;
 import org.gladiator.server.config.ServerConfig;
 import org.gladiator.server.config.ServerConfigFactory;
 import org.gladiator.util.chat.ChatUtils;
@@ -244,10 +245,20 @@ public final class Server implements AutoCloseable {
    * @param connection The Connection object representing the client's connection.
    */
   private void processMessages(final Connection connection) {
-    connection.readStream().map(ConnectionMessageFactory::createFromString).forEach(msg -> {
-      chatUtils.showNewMessage(msg);
-      sendToOtherConnections(msg, connection);
-    });
+    connection.readStream()
+        .map(transportMessage -> {
+          try {
+            return ConnectionMessageFactory.createFromString(transportMessage);
+          } catch (final InvalidMessageException e) {
+            LOGGER.debug(InvalidMessageException.DEFAULT_PROMPT, e);
+            return null;
+          }
+        })
+        .filter(Objects::nonNull)
+        .forEach(msg -> {
+          chatUtils.showNewMessage(msg);
+          sendToOtherConnections(msg, connection);
+        });
   }
 
   /**
