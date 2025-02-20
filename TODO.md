@@ -11,7 +11,7 @@
 
 ## Basic
 
-- [ ] Notify clients when someone connects/disconnects
+- [X] Notify clients when someone connects/disconnects
 - [ ] Add file transfer
 - [X] Better warning when server not found on client instead of throwing an exception
 

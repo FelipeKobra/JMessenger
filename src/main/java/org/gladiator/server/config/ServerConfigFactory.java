@@ -10,7 +10,6 @@ import org.gladiator.util.validation.InputValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
  * Factory class for creating {@link ServerConfig} instances.
  */
@@ -29,7 +28,6 @@ public class ServerConfigFactory {
     this.chatUtils = chatUtils;
   }
 
-
   /**
    * Creates a new {@link ServerConfig} instance based on user input.
    *
@@ -44,6 +42,11 @@ public class ServerConfigFactory {
     return "Y".equals(isCustom) ? createCustom() : createDefault();
   }
 
+  /**
+   * Gets a custom server name from the user.
+   *
+   * @return the custom server name
+   */
   private String getCustomName() {
     String serverName;
 
@@ -61,6 +64,11 @@ public class ServerConfigFactory {
     return serverName;
   }
 
+  /**
+   * Gets a custom server port from the user.
+   *
+   * @return the custom server port
+   */
   private int getCustomPort() {
     int serverPort;
     try {
@@ -79,15 +87,24 @@ public class ServerConfigFactory {
     return serverPort;
   }
 
+  /**
+   * Creates a custom {@link ServerConfig} instance based on user input.
+   *
+   * @return a custom {@link ServerConfig} instance
+   */
   private ServerConfig createCustom() {
 
-    chatUtils.displayOnScreen("Leave the field blank for the default setting");
     final String serverName = getCustomName();
     final int serverPort = getCustomPort();
 
     return new ServerConfig(serverName, serverPort);
   }
 
+  /**
+   * Creates a default {@link ServerConfig} instance.
+   *
+   * @return a default {@link ServerConfig} instance
+   */
   private ServerConfig createDefault() {
     return new ServerConfig();
   }

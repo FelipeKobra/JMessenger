@@ -2,6 +2,8 @@ package org.gladiator.util.chat;
 
 import java.io.IOException;
 import java.util.Objects;
+import org.gladiator.util.connection.message.ConnectionMessageType;
+import org.gladiator.util.connection.message.Message;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
@@ -58,11 +60,42 @@ public final class ChatUtils implements AutoCloseable {
   /**
    * Displays a new chat received message on the screen.
    *
+   * @param message The message to display.
+   */
+  public void showNewMessage(final Message message) {
+    final String messageContent = message.toString();
+    final ConnectionMessageType messageType = message.getType();
+
+    cleanLine();
+
+    if (ConnectionMessageType.NEW_CONNECTION == messageType) {
+      displayBanner(messageContent);
+    } else {
+      displayOnScreen(messageContent);
+    }
+
+    showBufferedUserPrompt();
+  }
+
+  /**
+   * Displays a new chat received message on the screen.
+   *
    * @param msg The message to display.
    */
   public void showNewMessage(final String msg) {
     cleanLine();
     displayOnScreen(msg);
+    showBufferedUserPrompt();
+  }
+
+  /**
+   * Displays a new chat received message on the screen in banner format.
+   *
+   * @param msg The message to display in banner format.
+   */
+  public void showNewMessageWithBanner(final String msg) {
+    cleanLine();
+    displayBanner(msg);
     showBufferedUserPrompt();
   }
 
@@ -107,7 +140,7 @@ public final class ChatUtils implements AutoCloseable {
    */
   public String askUserOption(final String optionName, final String defaultOption) {
     String userInput = getUserInput(
-        "Type the " + optionName + " (" + defaultOption + "):");
+        "Type the " + optionName + " (" + defaultOption + "): ");
 
     if (userInput.isBlank()) {
       userInput = defaultOption;
@@ -137,7 +170,7 @@ public final class ChatUtils implements AutoCloseable {
    *
    * @param str The string to print.
    */
-  public void prettyPrint(final String str) {
+  public void displayBanner(final String str) {
     final String division = "=".repeat(str.length());
 
     displayOnScreen(System.lineSeparator() + division);

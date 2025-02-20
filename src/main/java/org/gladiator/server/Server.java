@@ -1,6 +1,5 @@
 package org.gladiator.server;
 
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -24,8 +23,10 @@ import org.gladiator.server.config.ServerConfig;
 import org.gladiator.server.config.ServerConfigFactory;
 import org.gladiator.util.chat.ChatUtils;
 import org.gladiator.util.connection.Connection;
-import org.gladiator.util.connection.ConnectionMessage;
-import org.gladiator.util.connection.ConnectionMessageUtils;
+import org.gladiator.util.connection.message.ConnectionMessageFactory;
+import org.gladiator.util.connection.message.Message;
+import org.gladiator.util.connection.message.NewConnectionMessage;
+import org.gladiator.util.connection.message.SimpleMessage;
 import org.gladiator.util.network.PortMapper;
 import org.gladiator.util.thread.NamedVirtualThreadExecutorFactory;
 import org.jline.reader.EndOfFileException;
@@ -48,6 +49,14 @@ public final class Server implements AutoCloseable {
   private final ChatUtils chatUtils;
   private final ExecutorService executor;
 
+  /**
+   * Constructs a new Server instance.
+   *
+   * @param serverConfig the server configuration
+   * @param serverSocket the server socket
+   * @param chatUtils    the chat utilities
+   * @param executor     the executor service
+   */
   private Server(final ServerConfig serverConfig, final ServerSocket serverSocket,
       final ChatUtils chatUtils, final ExecutorService executor) {
     this.serverConfig = serverConfig;
@@ -144,13 +153,17 @@ public final class Server implements AutoCloseable {
 
         final String clientName = exchangeNames(writer, reader);
 
-        chatUtils.showNewMessage("User " + clientName + " Connected");
+        chatUtils.showNewMessageWithBanner("User " + clientName + " Connected");
 
         final Connection clientConnection = new Connection(clientName, reader, writer,
             clientSocket);
+
         clientConnections.add(clientConnection);
 
-        receiveMessages(reader, clientConnection);
+        final Message newConnectionMessage = new NewConnectionMessage(clientName);
+        sendToOtherConnections(newConnectionMessage, clientConnection);
+
+        receiveMessages(clientConnection);
       } catch (final IOException e) {
         LOGGER.debug(
             "Connection listening ended normally or error during Socket Server accept method: {}",
@@ -177,7 +190,7 @@ public final class Server implements AutoCloseable {
         }
 
         if (!line.isBlank()) {
-          final String msg = ConnectionMessageUtils.toRawString(serverConfig.name(), line);
+          final Message msg = new SimpleMessage(serverConfig.name(), line);
           broadcastMessageToConnections(msg);
         }
         line = chatUtils.getUserInput();
@@ -192,13 +205,13 @@ public final class Server implements AutoCloseable {
   /**
    * Broadcasts a message to all connected clients.
    *
-   * @param msg The message to be broadcast.
+   * @param message The message to be broadcast.
    */
-  private void broadcastMessageToConnections(final String msg) {
+  private void broadcastMessageToConnections(final Message message) {
     final List<CompletableFuture<Void>> futures = new ArrayList<>();
     for (final Connection connection : clientConnections) {
       final CompletableFuture<Void> future = CompletableFuture.runAsync(
-          () -> connection.writeOutput(msg), executor);
+          () -> connection.writeOutput(message), executor);
       futures.add(future);
     }
     CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
@@ -207,15 +220,14 @@ public final class Server implements AutoCloseable {
   /**
    * Receives messages from a client.
    *
-   * @param reader           The reader for the client's messages.
    * @param clientConnection The connection to the client.
    */
-  private void receiveMessages(final BufferedReader reader, final Connection clientConnection) {
+  private void receiveMessages(final Connection clientConnection) {
     final String clientName = clientConnection.getName();
 
     executor.execute(() -> {
       try {
-        processMessages(reader, clientConnection);
+        processMessages(clientConnection);
       } catch (final UncheckedIOException e) {
         LOGGER.debug("Connection with {} ended abruptly", clientName, e);
       } finally {
@@ -228,12 +240,11 @@ public final class Server implements AutoCloseable {
    * Processes messages received from a client. This method shows the message on the console and
    * redirects it to other connected clients.
    *
-   * @param reader     The BufferedReader to read messages from the client.
    * @param connection The Connection object representing the client's connection.
    */
-  private void processMessages(final BufferedReader reader, final Connection connection) {
-    reader.lines().map(ConnectionMessageUtils::fromRawString).forEach(msg -> {
-      chatUtils.showNewMessage(msg.toString());
+  private void processMessages(final Connection connection) {
+    connection.readStream().map(ConnectionMessageFactory::createMessage).forEach(msg -> {
+      chatUtils.showNewMessage(msg);
       sendToOtherConnections(msg, connection);
     });
   }
@@ -241,15 +252,15 @@ public final class Server implements AutoCloseable {
   /**
    * Sends a message to all connected clients, except the client that sent the message.
    *
-   * @param msg        The message to be sent.
+   * @param message    The message to be sent.
    * @param connection The connection to the client that sent the message.
    */
-  private void sendToOtherConnections(final ConnectionMessage msg, final Connection connection) {
+  private void sendToOtherConnections(final Message message, final Connection connection) {
     clientConnections.stream()
         .filter(Predicate.not(connection::equals))
         .forEach(otherConnection -> {
           final CompletableFuture<Void> sendMessageFuture = CompletableFuture.runAsync(
-              () -> otherConnection.writeOutput(msg.toRawString()), executor);
+              () -> otherConnection.writeOutput(message), executor);
           sendMessageFuture.exceptionally(ex -> {
             LOGGER.error("Error writing output to connection", ex);
             return null;
@@ -304,6 +315,9 @@ public final class Server implements AutoCloseable {
     return receiveClientNameFuture.join();
   }
 
+  /**
+   * Closes the server socket.
+   */
   private void closeServerSocket() {
     try {
       serverSocket.close();
@@ -312,6 +326,9 @@ public final class Server implements AutoCloseable {
     }
   }
 
+  /**
+   * Closes the server and all client connections.
+   */
   @Override
   public void close() {
     LOGGER.info("Closing all connections...");

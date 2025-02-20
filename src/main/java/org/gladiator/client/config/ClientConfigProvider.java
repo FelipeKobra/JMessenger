@@ -27,6 +27,7 @@ public final class ClientConfigProvider {
    * Creates a new ClientConfig by interacting with the user to receive the necessary input.
    *
    * @return a new ClientConfig instance with the user's input
+   * @throws EndApplicationException if the user input is invalid
    */
   public ClientConfig createClientConfig() throws EndApplicationException {
 
@@ -37,6 +38,12 @@ public final class ClientConfigProvider {
     return new ClientConfig(clientName, serverAddress, serverPort);
   }
 
+  /**
+   * Receives the client's name from the user.
+   *
+   * @return the client's name
+   * @throws EndApplicationException if the username is not valid
+   */
   private String receiveName() throws EndApplicationException {
     String name;
     name = chatUtils.getUserInput(
@@ -50,14 +57,30 @@ public final class ClientConfigProvider {
     return name;
   }
 
+  /**
+   * Receives the server address from the user.
+   *
+   * @return the server address
+   */
   private String receiveAddress() {
     return chatUtils.askUserOption("Server IP", "localhost");
   }
 
+  /**
+   * Receives the server port from the user.
+   *
+   * @return the server port
+   */
   private int receivePort() {
     return readPort(chatUtils);
   }
 
+  /**
+   * Reads the server port from the user.
+   *
+   * @param chatUtils the ChatUtils instance to use for user interaction
+   * @return the server port
+   */
   private int readPort(final ChatUtils chatUtils) {
     int serverPort = 0;
     boolean isPortValid = false;
@@ -81,6 +104,12 @@ public final class ClientConfigProvider {
     return serverPort;
   }
 
+  /**
+   * Checks if the server port is within the valid range.
+   *
+   * @param serverPort the server port to check
+   * @return true if the server port is within the valid range, false otherwise
+   */
   private boolean checkServerPortRange(final int serverPort) {
     if (Port.PORT_MIN < serverPort && Port.PORT_MAX > serverPort) {
       return true;
@@ -91,7 +120,5 @@ public final class ClientConfigProvider {
             + ")");
 
     return false;
-
   }
 }
-

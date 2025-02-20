@@ -19,7 +19,10 @@ import org.gladiator.client.config.ClientConfig;
 import org.gladiator.client.config.ClientConfigProvider;
 import org.gladiator.exception.EndApplicationException;
 import org.gladiator.util.chat.ChatUtils;
-import org.gladiator.util.connection.ConnectionMessageUtils;
+import org.gladiator.util.connection.Connection;
+import org.gladiator.util.connection.message.ConnectionMessageFactory;
+import org.gladiator.util.connection.message.Message;
+import org.gladiator.util.connection.message.SimpleMessage;
 import org.gladiator.util.thread.NamedVirtualThreadExecutorFactory;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.UserInterruptException;
@@ -35,14 +38,12 @@ public final class Client implements AutoCloseable {
   private static final Logger LOGGER = LoggerFactory.getLogger(Client.class);
 
   private final ClientConfig config;
-  private final Socket socket;
   private final ExecutorService executor;
   private final ChatUtils chatUtils;
 
-  private Client(final ClientConfig config, final Socket socket, final ExecutorService executor,
+  private Client(final ClientConfig config, final ExecutorService executor,
       final ChatUtils chatUtils) {
     this.config = config;
-    this.socket = socket;
     this.executor = executor;
     this.chatUtils = chatUtils;
   }
@@ -61,11 +62,10 @@ public final class Client implements AutoCloseable {
     try {
       final ClientConfig clientConfig = new ClientConfigProvider(
           chatUtils).createClientConfig();
-      final Socket socket = createSocket(chatUtils, clientConfig.serverAddress(),
-          clientConfig.port());
+
       final ExecutorService executor = NamedVirtualThreadExecutorFactory.create("client");
 
-      client = new Client(clientConfig, socket, executor, chatUtils);
+      client = new Client(clientConfig, executor, chatUtils);
     } catch (final UserInterruptException | EndOfFileException e) {
       throw new EndApplicationException(e);
     }
@@ -138,6 +138,9 @@ public final class Client implements AutoCloseable {
    */
   public void run() throws EndApplicationException {
     try {
+      final Socket socket = createSocket(chatUtils, config.serverAddress(),
+          config.port());
+
       final BufferedReader reader = new BufferedReader(
           new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
       final PrintWriter writer = new PrintWriter(socket.getOutputStream(), true,
@@ -145,17 +148,21 @@ public final class Client implements AutoCloseable {
 
       final String serverName = exchangeNames(writer, reader);
 
-      chatUtils.prettyPrint("Connection Established with " + serverName);
+      final Connection serverConnection = new Connection(serverName, reader, writer, socket);
+
+      chatUtils.displayBanner("Connection Established with " + serverName);
 
       chatUtils.displayOnScreen("Type `quit` to exit");
 
       final CompletableFuture<Void> receiveMessagesFuture = CompletableFuture.runAsync(
-          () -> receiveMessages(reader), executor);
+          () -> receiveMessages(serverConnection), executor);
 
       final CompletableFuture<Void> sendMessagesFuture = CompletableFuture.runAsync(
-          () -> sendMessages(writer), executor);
+          () -> sendMessages(serverConnection), executor);
 
       CompletableFuture.allOf(receiveMessagesFuture, sendMessagesFuture).join();
+
+      serverConnection.close();
       reconnectPrompt();
     } catch (final IOException e) {
       throw new EndApplicationException("Error creating Socket IO" + e);
@@ -163,30 +170,14 @@ public final class Client implements AutoCloseable {
 
   }
 
-  /**
-   * Receives messages from the server and displays them to the user.
-   *
-   * @param reader the BufferedReader to read messages from the server
-   */
-  private void receiveMessages(final BufferedReader reader) {
-    try {
-      reader.lines()
-          .map(ConnectionMessageUtils::fromRawString)
-          .forEach(msg ->
-              chatUtils.showNewMessage(msg.toString()));
-    } catch (final UncheckedIOException e) {
-      LOGGER.debug("The connection with the server has ended");
-    } finally {
-      executor.shutdownNow();
-    }
-  }
 
   /**
-   * Sends messages from the user to the server.
+   * Sends messages to the server. Reads user input and sends it as messages to the server.
+   * Terminates when the user types "quit".
    *
-   * @param writer the PrintWriter to send messages to the server
+   * @param serverConnection The connection to the server.
    */
-  private void sendMessages(final PrintWriter writer) {
+  private void sendMessages(final Connection serverConnection) {
 
     try {
       String line = chatUtils.getUserInput();
@@ -197,13 +188,30 @@ public final class Client implements AutoCloseable {
         }
 
         if (!line.isBlank()) {
-          final String msg = ConnectionMessageUtils.toRawString(config.name(), line);
-          writer.println(msg);
+          final Message msg = new SimpleMessage(config.name(), line);
+          serverConnection.writeOutput(msg);
         }
         line = chatUtils.getUserInput();
       }
     } catch (final EndOfFileException | UserInterruptException e) {
       LOGGER.debug(ChatUtils.USER_INTERRUPT_MESSAGE, e);
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+
+  /**
+   * Receives messages from the server and displays them using ChatUtils.
+   *
+   * @param serverConnection The connection to the server.
+   */
+  private void receiveMessages(final Connection serverConnection) {
+    try {
+      serverConnection.readStream()
+          .map(ConnectionMessageFactory::createMessage)
+          .forEach(chatUtils::showNewMessage);
+    } catch (final UncheckedIOException e) {
+      LOGGER.debug("The connection with the server has ended");
     } finally {
       executor.shutdownNow();
     }
@@ -258,18 +266,10 @@ public final class Client implements AutoCloseable {
     }
   }
 
-  private void closeSocket() {
-    try {
-      socket.close();
-    } catch (final IOException e) {
-      LOGGER.error("Error closing the socket connection: {}", e, e);
-    }
-  }
 
   @Override
   public void close() {
     LOGGER.debug("Closing connection");
     executor.shutdownNow();
-    closeSocket();
   }
 }
