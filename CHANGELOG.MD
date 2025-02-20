@@ -1,5 +1,22 @@
 # Changelog
 
+## [v0.8.0](https://github.com/FelipeKobra/JMessenger/compare/v0.8.0...master) (2025-02-20)
+
+### Breaking changes
+
+-  remove not necessary method on ChatUtils.java (showNewMessage with String parameter) ([31e60aed5758c62](https://github.com/FelipeKobra/JMessenger/commit/31e60aed5758c62))
+-  Notify other users when a new one connects ([e20f1b9e4b8df85](https://github.com/FelipeKobra/JMessenger/commit/e20f1b9e4b8df85))
+-  change next_release_version.ps1 script name and place ([9cbdb6449ee0cee](https://github.com/FelipeKobra/JMessenger/commit/9cbdb6449ee0cee))
+
+### Features
+
+-  Notify other users when a user disconnects ([232f1e23dcddf54](https://github.com/FelipeKobra/JMessenger/commit/232f1e23dcddf54))
+-  Notify other users when a new one connects ([e20f1b9e4b8df85](https://github.com/FelipeKobra/JMessenger/commit/e20f1b9e4b8df85))
+
+### Bug Fixes
+
+-  fix EI_EXPOSE_REP2 on Connection.java checking the nullity of some params ([307c4eb3b16b3cc](https://github.com/FelipeKobra/JMessenger/commit/307c4eb3b16b3cc))
+
 ## [v0.5.8](https://github.com/FelipeKobra/JMessenger/compare/v0.5.8...master) (2025-02-16)
 
 
