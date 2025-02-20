@@ -62,6 +62,6 @@ public record NewConnectionMessage(String newConnectionUserName) implements Mess
    */
   @Override
   public String toString() {
-    return "User " + newConnectionUserName + " connected";
+    return "User " + newConnectionUserName + " Connected";
   }
 }

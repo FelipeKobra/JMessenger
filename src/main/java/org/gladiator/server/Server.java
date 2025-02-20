@@ -155,14 +155,13 @@ public final class Server implements AutoCloseable {
 
         final String clientName = exchangeNames(writer, reader);
 
-        chatUtils.showNewMessageWithBanner("User " + clientName + " Connected");
-
         final Connection clientConnection = new Connection(clientName, reader, writer,
             clientSocket);
 
         clientConnections.add(clientConnection);
-
         final Message newConnectionMessage = new NewConnectionMessage(clientName);
+
+        chatUtils.showNewMessage(newConnectionMessage);
         sendToOtherConnections(newConnectionMessage, clientConnection);
 
         receiveMessages(clientConnection);
