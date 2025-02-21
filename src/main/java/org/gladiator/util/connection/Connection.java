@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.Validate;
 import org.gladiator.server.Server;
-import org.gladiator.util.connection.message.Message;
+import org.gladiator.util.connection.message.model.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

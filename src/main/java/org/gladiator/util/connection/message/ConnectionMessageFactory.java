@@ -1,8 +1,11 @@
 package org.gladiator.util.connection.message;
 
-import static org.gladiator.util.connection.message.Message.MESSAGE_SPLITTER;
 
 import org.gladiator.exception.InvalidMessageException;
+import org.gladiator.util.connection.message.model.DisconnectMessage;
+import org.gladiator.util.connection.message.model.Message;
+import org.gladiator.util.connection.message.model.NewConnectionMessage;
+import org.gladiator.util.connection.message.model.SimpleMessage;
 
 /**
  * Factory class for creating {@link Message} instances from transport messages.
@@ -26,7 +29,7 @@ public final class ConnectionMessageFactory {
   public static Message createFromString(final String transportMessage)
       throws InvalidMessageException {
     try {
-      final String messageTypeString = transportMessage.split(MESSAGE_SPLITTER, 2)[0];
+      final String messageTypeString = transportMessage.split(Message.MESSAGE_SPLITTER, 2)[0];
       final ConnectionMessageType messageType = ConnectionMessageType.valueOf(messageTypeString);
       return switch (messageType) {
         case SIMPLE -> SimpleMessage.fromTransportString(transportMessage);

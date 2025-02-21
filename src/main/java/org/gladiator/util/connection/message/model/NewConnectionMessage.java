@@ -1,25 +1,26 @@
-package org.gladiator.util.connection.message;
+package org.gladiator.util.connection.message.model;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.gladiator.util.connection.message.ConnectionMessageType;
 
 /**
  * Represents a message exchanged between connections. This class is immutable and uses the record
  * feature of Java.
  */
-public record DisconnectMessage(String disconnectedUserName) implements Message {
+public record NewConnectionMessage(String newConnectionUserName) implements Message {
 
-  private static final ConnectionMessageType TYPE = ConnectionMessageType.DISCONNECTION;
+  private static final ConnectionMessageType TYPE = ConnectionMessageType.NEW_CONNECTION;
 
   /**
    * Constructs a new ConnectionMessage.
    *
-   * @param disconnectedUserName The name of the sender.
+   * @param newConnectionUserName The name of the sender.
    * @throws NullPointerException     if any of the parameters are null.
    * @throws IllegalArgumentException if the senderName is blank.
    */
-  public DisconnectMessage {
-    Validate.notBlank(disconnectedUserName);
+  public NewConnectionMessage {
+    Validate.notBlank(newConnectionUserName);
   }
 
   /**
@@ -35,8 +36,8 @@ public record DisconnectMessage(String disconnectedUserName) implements Message 
     Validate.notBlank(message);
     Validate.matchesPattern(message, TYPE + MESSAGE_SPLITTER + "(.+)");
     final String[] split = StringUtils.split(message, MESSAGE_SPLITTER, 2);
-    final String disconnectedUserName = split[1];
-    return new DisconnectMessage(disconnectedUserName);
+    final String newConnectionUserName = split[1];
+    return new NewConnectionMessage(newConnectionUserName);
   }
 
   @Override
@@ -52,7 +53,7 @@ public record DisconnectMessage(String disconnectedUserName) implements Message 
    */
   @Override
   public String toTransportString() {
-    return TYPE + MESSAGE_SPLITTER + disconnectedUserName;
+    return TYPE + MESSAGE_SPLITTER + newConnectionUserName;
   }
 
   /**
@@ -62,6 +63,6 @@ public record DisconnectMessage(String disconnectedUserName) implements Message 
    */
   @Override
   public String toString() {
-    return "User " + disconnectedUserName + " disconnected";
+    return "User " + newConnectionUserName + " Connected";
   }
 }

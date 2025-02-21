@@ -1,42 +1,48 @@
-package org.gladiator.util.connection.message;
+package org.gladiator.util.connection.message.model;
 
+import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.gladiator.util.connection.message.ConnectionMessageType;
 
 /**
  * Represents a message exchanged between connections. This class is immutable and uses the record
  * feature of Java.
  */
-public record NewConnectionMessage(String newConnectionUserName) implements Message {
+public record SimpleMessage(String senderName, String message) implements Message {
 
-  private static final ConnectionMessageType TYPE = ConnectionMessageType.NEW_CONNECTION;
+  private static final ConnectionMessageType TYPE = ConnectionMessageType.SIMPLE;
 
   /**
    * Constructs a new ConnectionMessage.
    *
-   * @param newConnectionUserName The name of the sender.
+   * @param senderName The name of the sender.
+   * @param message    The message of the message.
    * @throws NullPointerException     if any of the parameters are null.
    * @throws IllegalArgumentException if the senderName is blank.
    */
-  public NewConnectionMessage {
-    Validate.notBlank(newConnectionUserName);
+  public SimpleMessage {
+    Validate.notBlank(senderName);
+    Objects.requireNonNull(message);
   }
 
   /**
-   * Creates a NewConnectionMessage from a transport string.
+   * Creates a SimpleMessage from a transport string.
    *
    * @param message The transport string.
-   * @return The created NewConnectionMessage.
+   * @return The created SimpleMessage.
    * @throws NullPointerException     if the message is null.
    * @throws IllegalArgumentException if the message is blank or does not match the expected
    *                                  pattern.
    */
   public static Message fromTransportString(final String message) {
     Validate.notBlank(message);
-    Validate.matchesPattern(message, TYPE + MESSAGE_SPLITTER + "(.+)");
-    final String[] split = StringUtils.split(message, MESSAGE_SPLITTER, 2);
-    final String newConnectionUserName = split[1];
-    return new NewConnectionMessage(newConnectionUserName);
+    Validate.matchesPattern(message, TYPE + MESSAGE_SPLITTER + "(.+)" + MESSAGE_SPLITTER + "(.*)");
+    final String[] split = StringUtils.split(message, MESSAGE_SPLITTER, 3);
+    final String senderName = split[1];
+    final String messageContent =
+        2 < split.length ? split[2] : StringUtils.defaultIfEmpty(null, "");
+    return new SimpleMessage(senderName, messageContent);
   }
 
   @Override
@@ -52,7 +58,7 @@ public record NewConnectionMessage(String newConnectionUserName) implements Mess
    */
   @Override
   public String toTransportString() {
-    return TYPE + MESSAGE_SPLITTER + newConnectionUserName;
+    return TYPE + MESSAGE_SPLITTER + senderName + MESSAGE_SPLITTER + message;
   }
 
   /**
@@ -62,6 +68,6 @@ public record NewConnectionMessage(String newConnectionUserName) implements Mess
    */
   @Override
   public String toString() {
-    return "User " + newConnectionUserName + " Connected";
+    return senderName + ": " + message;
   }
 }

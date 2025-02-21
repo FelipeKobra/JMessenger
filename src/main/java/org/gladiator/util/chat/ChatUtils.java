@@ -3,7 +3,7 @@ package org.gladiator.util.chat;
 import java.io.IOException;
 import java.util.Objects;
 import org.gladiator.util.connection.message.ConnectionMessageType;
-import org.gladiator.util.connection.message.Message;
+import org.gladiator.util.connection.message.model.Message;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
@@ -76,7 +76,7 @@ public final class ChatUtils implements AutoCloseable {
 
     showBufferedUserPrompt();
   }
-  
+
 
   /**
    * Reads user input from the console using the default prompt.

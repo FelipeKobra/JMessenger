@@ -1,4 +1,6 @@
-package org.gladiator.util.connection.message;
+package org.gladiator.util.connection.message.model;
+
+import org.gladiator.util.connection.message.ConnectionMessageType;
 
 /**
  * Interface representing a message.
