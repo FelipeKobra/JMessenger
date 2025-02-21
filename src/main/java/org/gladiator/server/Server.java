@@ -25,10 +25,11 @@ import org.gladiator.server.config.ServerConfigFactory;
 import org.gladiator.util.chat.ChatUtils;
 import org.gladiator.util.connection.Connection;
 import org.gladiator.util.connection.message.ConnectionMessageFactory;
-import org.gladiator.util.connection.message.DisconnectMessage;
-import org.gladiator.util.connection.message.Message;
-import org.gladiator.util.connection.message.NewConnectionMessage;
-import org.gladiator.util.connection.message.SimpleMessage;
+import org.gladiator.util.connection.message.NonServerSideOnlyPredicate;
+import org.gladiator.util.connection.message.model.DisconnectMessage;
+import org.gladiator.util.connection.message.model.Message;
+import org.gladiator.util.connection.message.model.NewConnectionMessage;
+import org.gladiator.util.connection.message.model.SimpleMessage;
 import org.gladiator.util.network.PortMapper;
 import org.gladiator.util.thread.NamedVirtualThreadExecutorFactory;
 import org.jline.reader.EndOfFileException;
@@ -42,7 +43,6 @@ import org.slf4j.LoggerFactory;
 public final class Server implements AutoCloseable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Server.class.getName());
-
   private final List<Connection> clientConnections = new CopyOnWriteArrayList<>();
   private final AtomicBoolean isClosingManually = new AtomicBoolean(false);
 
@@ -254,6 +254,7 @@ public final class Server implements AutoCloseable {
           }
         })
         .filter(Objects::nonNull)
+        .filter(new NonServerSideOnlyPredicate())
         .forEach(msg -> {
           chatUtils.showNewMessage(msg);
           sendToOtherConnections(msg, connection);

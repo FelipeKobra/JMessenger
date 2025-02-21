@@ -7,12 +7,35 @@ public enum ConnectionMessageType {
   /**
    * Represents a simple message type.
    */
-  SIMPLE,
+  SIMPLE(false),
 
   /**
    * Represents a new connection message type.
    */
-  NEW_CONNECTION,
+  NEW_CONNECTION(true),
 
-  DISCONNECTION
+  /**
+   * Represents a disconnection message type.
+   */
+  DISCONNECTION(true);
+
+  private final boolean serverSentOnly;
+
+  /**
+   * Constructs a ConnectionMessageType.
+   *
+   * @param serverSentOnly Indicates if the message type is only sent by the server.
+   */
+  ConnectionMessageType(final boolean serverSentOnly) {
+    this.serverSentOnly = serverSentOnly;
+  }
+
+  /**
+   * Checks if the message type is only sent by the server.
+   *
+   * @return true if the message type is only sent by the server, false otherwise.
+   */
+  public boolean isServerSentOnly() {
+    return serverSentOnly;
+  }
 }
