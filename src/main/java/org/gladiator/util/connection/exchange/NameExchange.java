@@ -15,6 +15,9 @@ import org.gladiator.util.crypto.CryptographyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Handles the exchange of names between two endpoints over a socket connection.
+ */
 public class NameExchange {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(NameExchange.class);
@@ -25,6 +28,15 @@ public class NameExchange {
   private final String ownName;
   private final ExecutorService executor;
 
+  /**
+   * Constructs a NameExchange with the specified parameters.
+   *
+   * @param socket              The socket for the exchange.
+   * @param aesKey              The AES secret key for encryption/decryption.
+   * @param cryptographyManager The manager for cryptographic operations.
+   * @param ownName             The name to be sent to the other endpoint.
+   * @param executor            The executor service for asynchronous operations.
+   */
   public NameExchange(final Socket socket, final SecretKey aesKey,
       final CryptographyManager cryptographyManager, final String ownName,
       final ExecutorService executor) {
@@ -36,6 +48,12 @@ public class NameExchange {
     this.executor = executor;
   }
 
+  /**
+   * Performs the name exchange operation.
+   *
+   * @return The name received from the other endpoint.
+   * @throws FailedExchangeException If an error occurs during the exchange.
+   */
   public String exchange() throws FailedExchangeException {
     try {
       final PrintWriter writer = IoUtils.createWriter(socket);
@@ -55,6 +73,11 @@ public class NameExchange {
     }
   }
 
+  /**
+   * Sends the own name to the other endpoint.
+   *
+   * @param writer The PrintWriter to send the name.
+   */
   private void sendName(final PrintWriter writer) {
     final String encryptedOwnName = cryptographyManager.encrypt(aesKey,
         ownName);
@@ -63,6 +86,12 @@ public class NameExchange {
     LOGGER.debug(logMessage);
   }
 
+  /**
+   * Receives the name from the other endpoint.
+   *
+   * @param reader The BufferedReader to read the name.
+   * @return The decrypted name received from the other endpoint.
+   */
   private String receiveName(final BufferedReader reader) {
     final String otherEndName;
     try {

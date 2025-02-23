@@ -56,6 +56,15 @@ public final class Connection implements AutoCloseable {
         "socket parameter on Connection must not be null");
   }
 
+  /**
+   * Creates a new Connection instance.
+   *
+   * @param name   The name of the client.
+   * @param socket The socket for the connection.
+   * @param aesKey The AES secret key for encryption and decryption.
+   * @return A new Connection instance.
+   * @throws IOException If an I/O error occurs when creating the reader or writer.
+   */
   public static Connection create(final String name, final Socket socket,
       final SecretKey aesKey) throws IOException {
     return new Connection(name, IoUtils.createReader(socket), IoUtils.createWriter(socket),
