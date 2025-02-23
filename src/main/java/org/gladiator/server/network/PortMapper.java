@@ -45,7 +45,7 @@ public final class PortMapper implements AutoCloseable {
 
     final Discovery discovery = new DiscoveryBuilder().withSoTimeout(600)
         .withoutShutdownHooks()
-        .onGateway(gw -> LOGGER.debug("Gateway found {}", gw.ip()))
+        .onGateway(gw -> LOGGER.debug("Gateway found: {}", gw.ip().getHostAddress()))
         .build();
 
     final PortMapper portMapper = new PortMapper(executor, portToMap, discovery);
