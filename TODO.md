@@ -2,7 +2,7 @@
 
 ## Cryptography
 
-- [ ] Create communication with cryptography
+- [X] Create communication with cryptography
 
 ## QOL
 
