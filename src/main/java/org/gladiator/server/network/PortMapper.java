@@ -1,4 +1,4 @@
-package org.gladiator.util.network;
+package org.gladiator.server.network;
 
 import com.sshtools.porter.UPnP.Discovery;
 import com.sshtools.porter.UPnP.DiscoveryBuilder;
