@@ -9,7 +9,12 @@ import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -173,12 +178,26 @@ public final class Client implements AutoCloseable {
 
   }
 
+  /**
+   * Receives the RSA public key from the server.
+   *
+   * <p>Note: The X509 encoded key specification is used because native images do not support the
+   * serialization of PublicKey objects.</p>
+   *
+   * @param socket the socket connected to the server
+   * @return the received RSA public key
+   * @throws IOException             if an I/O error occurs
+   * @throws FailedExchangeException if the key exchange fails
+   */
   private PublicKey receiveRsaPublicKey(final Socket socket)
       throws IOException, FailedExchangeException {
     final ObjectInput reader = IoUtils.createObjectReader(socket);
     final PublicKey otherEndPublicKey;
     try {
-      otherEndPublicKey = (PublicKey) reader.readObject();
+      final byte[] publicKeyBytes = (byte[]) reader.readObject();
+      final KeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
+      final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+      otherEndPublicKey = keyFactory.generatePublic(publicKeySpec);
       final String logMessage = "Received RSA public key";
       LOGGER.debug(logMessage);
     } catch (final IOException e) {
@@ -187,11 +206,24 @@ public final class Client implements AutoCloseable {
     } catch (final ClassNotFoundException e) {
       LOGGER.error("Class of PublicKey not found during RSA key receiving");
       throw new FailedExchangeException(e);
+    } catch (final NoSuchAlgorithmException e) {
+      LOGGER.error("Algorithm not found during RSA public key receiving");
+      throw new FailedExchangeException(e);
+    } catch (final InvalidKeySpecException e) {
+      LOGGER.error("Key Spec not found during RSA public key receiving");
+      throw new FailedExchangeException(e);
     }
     return otherEndPublicKey;
   }
 
 
+  /**
+   * Sends the client's AES key encrypted with the server's RSA public key.
+   *
+   * @param otherEndPublicKey the server's RSA public key
+   * @param socket            the socket connected to the server
+   * @throws UncheckedIOException if an I/O error occurs while sending the AES key
+   */
   private void sendOwnEncryptedAesKey(final PublicKey otherEndPublicKey, final Socket socket) {
     try {
       final PrintWriter writer = IoUtils.createWriter(socket);

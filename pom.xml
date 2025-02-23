@@ -6,7 +6,7 @@
   <!-- GAV -->
   <groupId>org.gladiator</groupId>
   <artifactId>JMessenger</artifactId>
-  <version>0.10.0</version>
+  <version>0.8.0</version>
 
   <!-- Maven Properties -->
   <modelVersion>4.0.0</modelVersion>

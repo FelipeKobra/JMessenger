@@ -186,11 +186,21 @@ public final class Server implements AutoCloseable {
     executor.shutdownNow();
   }
 
+  /**
+   * Sends the server's RSA public key to the client.
+   *
+   * <p>Note: The public key is sent as bytes instead of an object because native images do not
+   * support the deserialization of PublicKey objects due to the absence of a suitable
+   * constructor.</p>
+   *
+   * @param socket the socket connected to the client
+   * @throws FailedExchangeException if an error occurs while sending the RSA public key
+   */
   private void sendRsaPublicKey(final Socket socket) throws FailedExchangeException {
     try {
       final ObjectOutput writer = IoUtils.createObjectWriter(socket);
       final Key ownPublicKey = cryptographyManager.getRsaPublicKey();
-      writer.writeObject(ownPublicKey);
+      writer.writeObject(ownPublicKey.getEncoded());
       final String logMessage = "Sent RSA public key";
       LOGGER.debug(logMessage);
     } catch (final IOException e) {

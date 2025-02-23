@@ -1,18 +1,5 @@
 # Changelog
 
-## [v0.10.0](https://github.com/FelipeKobra/JMessenger/compare/v0.10.0...master) (2025-02-23)
-
-### Breaking changes
-
--  add cryptography to messages ([6aaaf0a97b99843](https://github.com/FelipeKobra/JMessenger/commit/6aaaf0a97b99843))
--  add check for invalid messages on ConnectionMessageFactory ([8e5a5db8e855183](https://github.com/FelipeKobra/JMessenger/commit/8e5a5db8e855183))
-
-### Features
-
--  add cryptography to messages ([6aaaf0a97b99843](https://github.com/FelipeKobra/JMessenger/commit/6aaaf0a97b99843))
--  check the message types on server side to not allow fake messages from clients ([7588f7c252e4082](https://github.com/FelipeKobra/JMessenger/commit/7588f7c252e4082))
-
-
 ## [v0.8.0](https://github.com/FelipeKobra/JMessenger/compare/v0.8.0...master) (2025-02-20)
 
 ### Breaking changes
