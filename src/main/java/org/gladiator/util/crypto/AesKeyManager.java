@@ -1,5 +1,6 @@
 package org.gladiator.util.crypto;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -135,15 +136,9 @@ public final class AesKeyManager {
           GCM_INIT_VECTOR_SIZE, decodedMessageBytes.length - GCM_INIT_VECTOR_SIZE);
 
       return new String(decryptedMessageBytes, StandardCharsets.UTF_8);
-    } catch (final InvalidKeyException e) {
-      return handleException("Invalid key used for AES decrypting", e, message);
-    } catch (final IllegalBlockSizeException e) {
-      return handleException("Invalid block size detected during AES decrypting", e,
-          message);
-    } catch (final BadPaddingException e) {
-      return handleException("Invalid padding detected during AES decrypting", e, message);
-    } catch (final InvalidAlgorithmParameterException e) {
-      return handleException("Invalid parameter spec during AES decrypting", e, message);
+    } catch (final InvalidKeyException | InvalidAlgorithmParameterException
+                   | IllegalBlockSizeException | BadPaddingException | IOException e) {
+      return handleException("Error during a AES decrypt", e, message);
     }
   }
 
@@ -168,7 +163,11 @@ public final class AesKeyManager {
    * @param messageBytes The message bytes.
    * @return The extracted IV.
    */
-  private byte[] getIvFromMessage(final byte[] messageBytes) {
+  private byte[] getIvFromMessage(final byte[] messageBytes) throws IOException {
+    if (GCM_INIT_VECTOR_SIZE + 1 > messageBytes.length) {
+      throw new IOException("Invalid message for AES decrypting: " + new String(messageBytes,
+          StandardCharsets.UTF_8));
+    }
     final byte[] iv = new byte[GCM_INIT_VECTOR_SIZE];
     System.arraycopy(messageBytes, 0, iv, 0, iv.length);
     return iv;
