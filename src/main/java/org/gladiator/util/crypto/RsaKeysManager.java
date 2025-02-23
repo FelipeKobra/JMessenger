@@ -60,9 +60,9 @@ public final class RsaKeysManager {
       return new RsaKeysManager(kp.getPrivate(), kp.getPublic(), cipher);
     } catch (final NoSuchAlgorithmException e) {
       throw new EndApplicationException(
-          "The algorithm: " + ALGORITHM + "is not valid.", e);
+          "The RSA algorithm: " + ALGORITHM + "is not valid.", e);
     } catch (final NoSuchPaddingException e) {
-      throw new EndApplicationException("Error during cipher padding creation", e);
+      throw new EndApplicationException("Error during RSA cipher padding creation", e);
     }
   }
 

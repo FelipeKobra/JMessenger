@@ -63,9 +63,9 @@ public final class AesKeyManager {
       return new AesKeyManager(aesKey, cipher);
     } catch (final NoSuchAlgorithmException e) {
       throw new EndApplicationException(
-          "The algorithm: " + ALGORITHM + "is not valid.", e);
+          "The AES algorithm: " + ALGORITHM + "is not valid", e);
     } catch (final NoSuchPaddingException e) {
-      throw new EndApplicationException("Error during cipher padding creation", e);
+      throw new EndApplicationException("Error during AES cipher padding creation", e);
     }
   }
 
