@@ -22,4 +22,14 @@ public class EndApplicationException extends Exception {
   public EndApplicationException(final String message) {
     super(message);
   }
+
+  /**
+   * Constructs a new EndApplicationException with the specified message and cause.
+   *
+   * @param message the detail message
+   * @param cause   the cause of the exception
+   */
+  public EndApplicationException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
 }

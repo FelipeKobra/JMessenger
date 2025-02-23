@@ -8,7 +8,7 @@ public final class Port {
   /**
    * The default port number.
    */
-  public static final int PORT_DEFAULT = 50_000;
+  public static final int PORT_DEFAULT = 443;
   /**
    * The minimum port number.
    */

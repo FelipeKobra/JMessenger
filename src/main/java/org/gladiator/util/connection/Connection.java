@@ -7,9 +7,11 @@ import java.net.Socket;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+import javax.crypto.SecretKey;
 import org.apache.commons.lang3.Validate;
 import org.gladiator.server.Server;
 import org.gladiator.util.connection.message.model.Message;
+import org.gladiator.util.crypto.CryptographyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,9 +30,10 @@ public final class Connection implements AutoCloseable {
    * connection).
    */
   private final String name;
-  private final BufferedReader input;
-  private final PrintWriter output;
-  private final Socket clientSocket;
+  private final BufferedReader reader;
+  private final PrintWriter writer;
+  private final Socket socket;
+  private final SecretKey aesKey;
 
   /**
    * Constructs a new Connection.
@@ -42,14 +45,21 @@ public final class Connection implements AutoCloseable {
    * @throws NullPointerException     if any of the parameters are null.
    * @throws IllegalArgumentException if the name is blank.
    */
-  public Connection(final String name, final BufferedReader reader, final PrintWriter writer,
-      final Socket socket) {
+  private Connection(final String name, final BufferedReader reader, final PrintWriter writer,
+      final Socket socket, final SecretKey aesKey) {
     Validate.notBlank(name);
+    this.aesKey = aesKey;
     this.name = name;
-    this.input = reader;
-    this.output = Objects.requireNonNull(writer, "writer parameter on Connection must not be null");
-    this.clientSocket = Objects.requireNonNull(socket,
+    this.reader = reader;
+    this.writer = Objects.requireNonNull(writer, "writer parameter on Connection must not be null");
+    this.socket = Objects.requireNonNull(socket,
         "socket parameter on Connection must not be null");
+  }
+
+  public static Connection create(final String name, final Socket socket,
+      final SecretKey aesKey) throws IOException {
+    return new Connection(name, IoUtils.createReader(socket), IoUtils.createWriter(socket),
+        socket, aesKey);
   }
 
   /**
@@ -77,8 +87,8 @@ public final class Connection implements AutoCloseable {
    *
    * @return a Stream of lines from the input.
    */
-  public Stream<String> readStream() {
-    return input.lines();
+  public Stream<String> readStream(final CryptographyManager cryptographyManager) {
+    return reader.lines().map(msg -> cryptographyManager.decrypt(aesKey, msg));
   }
 
   /**
@@ -86,8 +96,10 @@ public final class Connection implements AutoCloseable {
    *
    * @param message the message to write to the output stream
    */
-  public void writeOutput(final Message message) {
-    output.println(message.toTransportString());
+  public void writeOutput(final Message message, final CryptographyManager cryptographyManager) {
+    final String encryptedMessage = cryptographyManager.encrypt(aesKey,
+        message.toTransportString());
+    writer.println(encryptedMessage);
   }
 
   /**
@@ -98,9 +110,9 @@ public final class Connection implements AutoCloseable {
   @Override
   public void close() {
     try {
-      output.close();
-      input.close();
-      clientSocket.close();
+      writer.close();
+      reader.close();
+      socket.close();
     } catch (final IOException e) {
       LOGGER.error("Error closing the connection: {}", e, e);
     }

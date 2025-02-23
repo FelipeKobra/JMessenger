@@ -1,29 +1,33 @@
 package org.gladiator.client;
 
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.ObjectInput;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
+import java.security.PublicKey;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import javax.crypto.SecretKey;
 import javax.net.SocketFactory;
 import org.gladiator.client.config.ClientConfig;
 import org.gladiator.client.config.ClientConfigProvider;
 import org.gladiator.exception.EndApplicationException;
+import org.gladiator.exception.FailedExchangeException;
 import org.gladiator.exception.InvalidMessageException;
 import org.gladiator.util.chat.ChatUtils;
 import org.gladiator.util.connection.Connection;
+import org.gladiator.util.connection.IoUtils;
+import org.gladiator.util.connection.exchange.NameExchange;
 import org.gladiator.util.connection.message.ConnectionMessageFactory;
 import org.gladiator.util.connection.message.model.Message;
 import org.gladiator.util.connection.message.model.SimpleMessage;
+import org.gladiator.util.crypto.CryptographyManager;
 import org.gladiator.util.thread.NamedVirtualThreadExecutorFactory;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.UserInterruptException;
@@ -41,12 +45,14 @@ public final class Client implements AutoCloseable {
   private final ClientConfig config;
   private final ExecutorService executor;
   private final ChatUtils chatUtils;
+  private final CryptographyManager cryptographyManager;
 
   private Client(final ClientConfig config, final ExecutorService executor,
-      final ChatUtils chatUtils) {
+      final ChatUtils chatUtils, final CryptographyManager cryptographyManager) {
     this.config = config;
     this.executor = executor;
     this.chatUtils = chatUtils;
+    this.cryptographyManager = cryptographyManager;
   }
 
   /**
@@ -65,8 +71,9 @@ public final class Client implements AutoCloseable {
           chatUtils).createClientConfig();
 
       final ExecutorService executor = NamedVirtualThreadExecutorFactory.create("client");
+      final CryptographyManager cryptographyManager = CryptographyManager.create();
 
-      client = new Client(clientConfig, executor, chatUtils);
+      client = new Client(clientConfig, executor, chatUtils, cryptographyManager);
     } catch (final UserInterruptException | EndOfFileException e) {
       throw new EndApplicationException(e);
     }
@@ -75,19 +82,12 @@ public final class Client implements AutoCloseable {
     return client;
   }
 
-  /**
-   * Creates a socket connection to the specified server address and port.
-   *
-   * @param chatUtils     the ChatUtils instance for user interaction
-   * @param serverAddress the address of the server to connect to
-   * @param port          the port number to connect to
-   * @return a Socket connected to the server
-   * @throws EndApplicationException if an error occurs during socket creation
-   */
-  private static Socket createSocket(final ChatUtils chatUtils,
-      final String serverAddress, final int port)
+
+  private static Socket createSocket(final ChatUtils chatUtils, final ClientConfig clientConfig)
       throws EndApplicationException {
 
+    final String serverAddress = clientConfig.serverAddress();
+    final int port = clientConfig.port();
     Socket clientSocket = null;
 
     try {
@@ -125,7 +125,7 @@ public final class Client implements AutoCloseable {
       final String userMessage,
       final Exception exception)
       throws EndApplicationException {
-    LOGGER.debug(logMessage, exception);
+    LOGGER.debug(logMessage);
     chatUtils.displayOnScreen(userMessage);
     throw new EndApplicationException(exception);
   }
@@ -139,17 +139,17 @@ public final class Client implements AutoCloseable {
    */
   public void run() throws EndApplicationException {
     try {
-      final Socket socket = createSocket(chatUtils, config.serverAddress(),
-          config.port());
+      final Socket socket = createSocket(chatUtils, config);
 
-      final BufferedReader reader = new BufferedReader(
-          new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-      final PrintWriter writer = new PrintWriter(socket.getOutputStream(), true,
-          StandardCharsets.UTF_8);
+      final PublicKey serverPublicKey = receiveRsaPublicKey(socket);
+      sendOwnEncryptedAesKey(serverPublicKey, socket);
 
-      final String serverName = exchangeNames(writer, reader);
+      final SecretKey ownAesKey = cryptographyManager.getAesKey();
 
-      final Connection serverConnection = new Connection(serverName, reader, writer, socket);
+      final String serverName = new NameExchange(socket, ownAesKey, cryptographyManager,
+          config.name(), executor).exchange();
+
+      final Connection serverConnection = Connection.create(serverName, socket, ownAesKey);
 
       chatUtils.displayBanner("Connection Established with " + serverName);
 
@@ -167,8 +167,43 @@ public final class Client implements AutoCloseable {
       reconnectPrompt();
     } catch (final IOException e) {
       throw new EndApplicationException("Error creating Socket IO" + e);
+    } catch (final FailedExchangeException e) {
+      throw new EndApplicationException(e);
     }
 
+  }
+
+  private PublicKey receiveRsaPublicKey(final Socket socket)
+      throws IOException, FailedExchangeException {
+    final ObjectInput reader = IoUtils.createObjectReader(socket);
+    final PublicKey otherEndPublicKey;
+    try {
+      otherEndPublicKey = (PublicKey) reader.readObject();
+      final String logMessage = "Received RSA public key";
+      LOGGER.debug(logMessage);
+    } catch (final IOException e) {
+      LOGGER.error("Error receiving RSA key");
+      throw new FailedExchangeException(e);
+    } catch (final ClassNotFoundException e) {
+      LOGGER.error("Class of PublicKey not found during RSA key receiving");
+      throw new FailedExchangeException(e);
+    }
+    return otherEndPublicKey;
+  }
+
+
+  private void sendOwnEncryptedAesKey(final PublicKey otherEndPublicKey, final Socket socket) {
+    try {
+      final PrintWriter writer = IoUtils.createWriter(socket);
+      final SecretKey aesKey = cryptographyManager.getAesKey();
+      final String encryptedAesKey = cryptographyManager.encryptRsa(otherEndPublicKey, aesKey);
+      writer.println(encryptedAesKey);
+      final String logMessage = "AES key sent";
+      LOGGER.debug(logMessage);
+    } catch (final IOException e) {
+      LOGGER.error("Error sending AES key");
+      throw new UncheckedIOException(e);
+    }
   }
 
 
@@ -190,7 +225,7 @@ public final class Client implements AutoCloseable {
 
         if (!line.isBlank()) {
           final Message msg = new SimpleMessage(config.name(), line);
-          serverConnection.writeOutput(msg);
+          serverConnection.writeOutput(msg, cryptographyManager);
         }
         line = chatUtils.getUserInput();
       }
@@ -208,7 +243,7 @@ public final class Client implements AutoCloseable {
    */
   private void receiveMessages(final Connection serverConnection) {
     try {
-      serverConnection.readStream()
+      serverConnection.readStream(cryptographyManager)
           .map(transportMessage -> {
             try {
               return ConnectionMessageFactory.createFromString(transportMessage);
@@ -226,38 +261,6 @@ public final class Client implements AutoCloseable {
     }
   }
 
-  /**
-   * Exchanges names with the server by sending the client's name and receiving the server's name.
-   *
-   * @param writer the PrintWriter to send the client's name to the server
-   * @param reader the BufferedReader to receive the server's name
-   * @return the name of the server
-   */
-  private String exchangeNames(final PrintWriter writer, final BufferedReader reader) {
-
-    final CompletableFuture<Void> sendNameFuture = CompletableFuture.runAsync(() -> {
-      writer.println(config.name());
-      final String logMessage = "Sent name (" + config.name() + ") to server.";
-      LOGGER.debug(logMessage);
-    }, executor);
-
-    final CompletableFuture<String> receiveNameFuture = CompletableFuture.supplyAsync(() -> {
-      String serverName = "";
-      try {
-        serverName = reader.readLine();
-        final String logMessage = "Received name from server: " + serverName + ".";
-        LOGGER.debug(logMessage);
-      } catch (final IOException e) {
-        LOGGER.error("Error receiving server name: {}", e, e);
-      }
-
-      return serverName;
-    }, executor);
-
-    CompletableFuture.allOf(sendNameFuture, receiveNameFuture).join();
-
-    return receiveNameFuture.join();
-  }
 
   /**
    * Prompts the user to reconnect to another server.
