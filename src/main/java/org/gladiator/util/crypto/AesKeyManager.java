@@ -1,6 +1,5 @@
 package org.gladiator.util.crypto;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -34,18 +33,15 @@ public final class AesKeyManager {
   private static final int GCM_SPEC_SIZE = 128;
 
   private final RandomGenerator random = new SecureRandom();
-  private final Cipher cipher;
   private final SecretKey key;
 
   /**
    * Constructs an AesKeyManager with the specified key and cipher.
    *
-   * @param key    The AES secret key.
-   * @param cipher The cipher instance.
+   * @param key The AES secret key.
    */
-  private AesKeyManager(final SecretKey key, final Cipher cipher) {
+  private AesKeyManager(final SecretKey key) {
     this.key = key;
-    this.cipher = cipher;
   }
 
   /**
@@ -56,18 +52,17 @@ public final class AesKeyManager {
    */
   static AesKeyManager create() throws EndApplicationException {
     try {
-      final Cipher cipher = Cipher.getInstance(ALGORITHM + PADDING);
-
       final KeyGenerator keyGenerator = KeyGenerator.getInstance(ALGORITHM);
       keyGenerator.init(KEY_SIZE);
       final SecretKey aesKey = keyGenerator.generateKey();
-      return new AesKeyManager(aesKey, cipher);
+      return new AesKeyManager(aesKey);
     } catch (final NoSuchAlgorithmException e) {
-      throw new EndApplicationException(
-          "The AES algorithm: " + ALGORITHM + "is not valid", e);
-    } catch (final NoSuchPaddingException e) {
-      throw new EndApplicationException("Error during AES cipher padding creation", e);
+      throw new EndApplicationException(e);
     }
+  }
+
+  private Cipher createCipher() throws NoSuchPaddingException, NoSuchAlgorithmException {
+    return Cipher.getInstance(ALGORITHM + PADDING);
   }
 
   /**
@@ -90,6 +85,7 @@ public final class AesKeyManager {
   public String encrypt(final SecretKey aesKey, final String message) {
     try {
       final byte[] iv = createIv();
+      final Cipher cipher = createCipher();
 
       final AlgorithmParameterSpec parameterSpec = new GCMParameterSpec(GCM_SPEC_SIZE, iv);
       cipher.init(Cipher.ENCRYPT_MODE, aesKey, parameterSpec);
@@ -99,15 +95,11 @@ public final class AesKeyManager {
       final byte[] encryptedMessageBytesWithIv = addIvToMessage(iv, encryptedMessageBytes);
 
       return Base64.getEncoder().encodeToString(encryptedMessageBytesWithIv);
-    } catch (final InvalidKeyException e) {
-      return handleException("Invalid key used for AES encrypting", e, message);
-    } catch (final IllegalBlockSizeException e) {
-      return handleException("Invalid block size detected during AES encrypting", e,
-          message);
-    } catch (final BadPaddingException e) {
-      return handleException("Invalid padding detected during AES encrypting", e, message);
-    } catch (final InvalidAlgorithmParameterException e) {
-      return handleException("Invalid parameter spec during AES encrypting", e, message);
+    } catch (final InvalidKeyException | IllegalBlockSizeException | BadPaddingException
+                   | InvalidAlgorithmParameterException | NoSuchPaddingException
+                   | NoSuchAlgorithmException e) {
+      return handleException("Error during a AES encrypt with message: (" + message + ")", e,
+          Base64.getEncoder().encodeToString(message.getBytes(StandardCharsets.UTF_8)));
     }
   }
 
@@ -129,6 +121,7 @@ public final class AesKeyManager {
 
       final byte[] iv = getIvFromMessage(decodedMessageBytes);
 
+      final Cipher cipher = createCipher();
       final AlgorithmParameterSpec paramSpec = new GCMParameterSpec(GCM_SPEC_SIZE, iv);
       cipher.init(Cipher.DECRYPT_MODE, aesKey, paramSpec);
 
@@ -137,8 +130,10 @@ public final class AesKeyManager {
 
       return new String(decryptedMessageBytes, StandardCharsets.UTF_8);
     } catch (final InvalidKeyException | InvalidAlgorithmParameterException
-                   | IllegalBlockSizeException | BadPaddingException | IOException e) {
-      return handleException("Error during a AES decrypt", e, message);
+                   | IllegalBlockSizeException | BadPaddingException | NoSuchPaddingException
+                   | NoSuchAlgorithmException e) {
+      return handleException("Error during a AES decrypt with message: " + message, e,
+          new String(Base64.getDecoder().decode(message), StandardCharsets.UTF_8));
     }
   }
 
@@ -163,11 +158,7 @@ public final class AesKeyManager {
    * @param messageBytes The message bytes.
    * @return The extracted IV.
    */
-  private byte[] getIvFromMessage(final byte[] messageBytes) throws IOException {
-    if (GCM_INIT_VECTOR_SIZE + 1 > messageBytes.length) {
-      throw new IOException("Invalid message for AES decrypting: " + new String(messageBytes,
-          StandardCharsets.UTF_8));
-    }
+  private byte[] getIvFromMessage(final byte[] messageBytes) {
     final byte[] iv = new byte[GCM_INIT_VECTOR_SIZE];
     System.arraycopy(messageBytes, 0, iv, 0, iv.length);
     return iv;

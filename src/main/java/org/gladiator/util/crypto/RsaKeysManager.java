@@ -35,13 +35,10 @@ public final class RsaKeysManager {
 
   private final PrivateKey privateKey;
   private final PublicKey publicKey;
-  private final Cipher cipher;
 
-  private RsaKeysManager(final PrivateKey privateKey, final PublicKey publicKey,
-      final Cipher cipher) {
+  private RsaKeysManager(final PrivateKey privateKey, final PublicKey publicKey) {
     this.privateKey = privateKey;
     this.publicKey = publicKey;
-    this.cipher = cipher;
   }
 
   /**
@@ -56,14 +53,15 @@ public final class RsaKeysManager {
       kpg = KeyPairGenerator.getInstance(ALGORITHM);
       kpg.initialize(KEY_SIZE);
       final KeyPair kp = kpg.generateKeyPair();
-      final Cipher cipher = Cipher.getInstance(ALGORITHM + PADDING);
-      return new RsaKeysManager(kp.getPrivate(), kp.getPublic(), cipher);
+      return new RsaKeysManager(kp.getPrivate(), kp.getPublic());
     } catch (final NoSuchAlgorithmException e) {
       throw new EndApplicationException(
           "The RSA algorithm: " + ALGORITHM + "is not valid.", e);
-    } catch (final NoSuchPaddingException e) {
-      throw new EndApplicationException("Error during RSA cipher padding creation", e);
     }
+  }
+
+  private Cipher createCipher() throws NoSuchPaddingException, NoSuchAlgorithmException {
+    return Cipher.getInstance(ALGORITHM + PADDING);
   }
 
   /**
@@ -88,19 +86,15 @@ public final class RsaKeysManager {
    */
   public String encrypt(final PublicKey publicKey, final Key key) {
     final byte[] keyBytes = key.getEncoded();
-    final String notEncryptedKeyString = Base64.getEncoder().encodeToString(keyBytes);
     try {
+      final Cipher cipher = createCipher();
       cipher.init(Cipher.ENCRYPT_MODE, publicKey);
       final byte[] encryptedKeyBytes = cipher.doFinal(keyBytes);
       return Base64.getEncoder().encodeToString(encryptedKeyBytes);
-    } catch (final InvalidKeyException e) {
-      return handleException("Invalid key used for RSA encrypting", e, notEncryptedKeyString);
-    } catch (final IllegalBlockSizeException e) {
-      return handleException("Invalid block size detected during RSA encrypting", e,
-          notEncryptedKeyString);
-    } catch (final BadPaddingException e) {
-      return handleException("Invalid padding detected during RSA encrypting", e,
-          notEncryptedKeyString);
+    } catch (final NoSuchPaddingException | InvalidKeyException | NoSuchAlgorithmException
+                   | IllegalBlockSizeException | BadPaddingException e) {
+      return handleException("Error during a RSA encrypt with key: (" + key + ")", e,
+          Base64.getEncoder().encodeToString(keyBytes));
     }
   }
 
@@ -118,16 +112,13 @@ public final class RsaKeysManager {
     final byte[] decodedKeyBytes = Base64.getDecoder().decode(keyAsString);
     final SecretKey encryptedKey = new SecretKeySpec(decodedKeyBytes, "AES");
     try {
+      final Cipher cipher = createCipher();
       cipher.init(Cipher.DECRYPT_MODE, privateKey);
       final byte[] decryptedKeyBytes = cipher.doFinal(decodedKeyBytes);
       return new SecretKeySpec(decryptedKeyBytes, "AES");
-    } catch (final InvalidKeyException e) {
-      return handleException("Invalid keyAsString used for RSA decrypting", e, encryptedKey);
-    } catch (final IllegalBlockSizeException e) {
-      return handleException("Invalid block size detected during RSA decrypting", e,
-          encryptedKey);
-    } catch (final BadPaddingException e) {
-      return handleException("Invalid padding detected during RSA decrypting", e,
+    } catch (final NoSuchPaddingException | InvalidKeyException | NoSuchAlgorithmException
+                   | IllegalBlockSizeException | BadPaddingException e) {
+      return handleException("Error during a RSA decryption with key: (" + keyAsString + ")", e,
           encryptedKey);
     }
   }
