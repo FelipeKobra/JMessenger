@@ -36,10 +36,11 @@ git add .
 git commit -m "docs: update to version $nextVersion"
 
 # 6. Remove the tag of the previous commit and create the same tag on this new one
-$previousTag = git tag -l | Select-Object -Last 1
-if ($null -ne $previousTag -and $previousTag -eq "v$nextVersion")
+$lastTag = git describe --tags --abbrev=0
+if ($lastTag -eq "v$nextVersion")
 {
-    git tag -d $previousTag
+    git tag -d $lastTag
 }
+
 git tag -a v$nextVersion -m "version $nextVersion"
 Exit 0

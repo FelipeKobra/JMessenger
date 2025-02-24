@@ -1,6 +1,6 @@
 # Changelog
 
-## [v0.10.0](https://github.com/FelipeKobra/JMessenger/compare/v0.10.0...master) (2025-02-23)
+## [v0.10.3](https://github.com/FelipeKobra/JMessenger/compare/v0.10.3...master) (2025-02-24)
 
 ### Breaking changes
 
@@ -9,9 +9,14 @@
 
 ### Features
 
+-  verify message GCM tag size before trying to get the tag ([3bcd7acfa5b767c](https://github.com/FelipeKobra/JMessenger/commit/3bcd7acfa5b767c))
 -  add cryptography to messages ([6aaaf0a97b99843](https://github.com/FelipeKobra/JMessenger/commit/6aaaf0a97b99843))
 -  check the message types on server side to not allow fake messages from clients ([7588f7c252e4082](https://github.com/FelipeKobra/JMessenger/commit/7588f7c252e4082))
 
+### Bug Fixes
+
+-  fix AES key not being decrypted because of cipher collision ([efcce4c8fc179b6](https://github.com/FelipeKobra/JMessenger/commit/efcce4c8fc179b6))
+-  add support for cryptography on native image ([957f7c5ebcec6b1](https://github.com/FelipeKobra/JMessenger/commit/957f7c5ebcec6b1))
 
 ## [v0.8.0](https://github.com/FelipeKobra/JMessenger/compare/v0.8.0...master) (2025-02-20)
 
