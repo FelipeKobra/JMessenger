@@ -25,13 +25,14 @@ public final class ClientMain {
    */
   public static void main(final String... args) {
     final ChatUtils chatUtils = ChatUtils.create(">");
+    boolean isRunning = true;
 
-    while (true) {
+    while (isRunning) {
       try (final Client client = Client.createClient(chatUtils)) {
         client.run();
       } catch (final EndApplicationException e) {
         LOGGER.debug("Client Ended", e);
-        break;
+        isRunning = false;
       }
     }
 
