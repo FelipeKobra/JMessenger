@@ -67,13 +67,11 @@ public final class Client implements AutoCloseable {
    * @return a new Client instance
    * @throws EndApplicationException if an error occurs during client creation
    */
-  public static Client createClient(final ChatUtils chatUtils)
-      throws EndApplicationException {
+  public static Client createClient(final ChatUtils chatUtils) throws EndApplicationException {
 
     final Client client;
     try {
-      final ClientConfig clientConfig = new ClientConfigProvider(
-          chatUtils).createClientConfig();
+      final ClientConfig clientConfig = new ClientConfigProvider(chatUtils).createClientConfig();
 
       final ExecutorService executor = NamedVirtualThreadExecutorFactory.create("client");
       final CryptographyManager cryptographyManager = CryptographyManager.create();
@@ -87,8 +85,24 @@ public final class Client implements AutoCloseable {
     return client;
   }
 
+  /**
+   * Handles exceptions by logging the message, displaying a user message, and throwing an
+   * EndApplicationException.
+   *
+   * @param chatUtils   the ChatUtils instance for user interaction
+   * @param logMessage  the message to log
+   * @param userMessage the message to display to the user
+   * @param exception   the exception to handle
+   * @throws EndApplicationException the wrapped exception
+   */
+  private static void handleException(final ChatUtils chatUtils, final String logMessage,
+      final String userMessage, final Exception exception) throws EndApplicationException {
+    LOGGER.debug(logMessage);
+    chatUtils.displayOnScreen(userMessage);
+    throw new EndApplicationException(exception);
+  }
 
-  private static Socket createSocket(final ChatUtils chatUtils, final ClientConfig clientConfig)
+  private Socket createSocket(final ChatUtils chatUtils, final ClientConfig clientConfig)
       throws EndApplicationException {
 
     final String serverAddress = clientConfig.serverAddress();
@@ -96,8 +110,7 @@ public final class Client implements AutoCloseable {
     Socket clientSocket = null;
 
     try {
-      clientSocket = SocketFactory.getDefault()
-          .createSocket(serverAddress, port);
+      clientSocket = SocketFactory.getDefault().createSocket(serverAddress, port);
     } catch (final UnknownHostException e) {
       handleException(chatUtils, "Server Address not found",
           "Server " + serverAddress + " not Found", e);
@@ -116,25 +129,9 @@ public final class Client implements AutoCloseable {
     return clientSocket;
   }
 
-  /**
-   * Handles exceptions by logging the message, displaying a user message, and throwing an
-   * EndApplicationException.
-   *
-   * @param chatUtils   the ChatUtils instance for user interaction
-   * @param logMessage  the message to log
-   * @param userMessage the message to display to the user
-   * @param exception   the exception to handle
-   * @throws EndApplicationException the wrapped exception
-   */
-  private static void handleException(final ChatUtils chatUtils, final String logMessage,
-      final String userMessage,
-      final Exception exception)
-      throws EndApplicationException {
-    LOGGER.debug(logMessage);
-    chatUtils.displayOnScreen(userMessage);
-    throw new EndApplicationException(exception);
+  private Socket createSocket() throws EndApplicationException {
+    return createSocket(chatUtils, config);
   }
-
 
   /**
    * Runs the client by establishing a connection, exchanging names with the server, and handling
@@ -144,30 +141,9 @@ public final class Client implements AutoCloseable {
    */
   public void run() throws EndApplicationException {
     try {
-      final Socket socket = createSocket(chatUtils, config);
-
-      final PublicKey serverPublicKey = receiveRsaPublicKey(socket);
-      sendOwnEncryptedAesKey(serverPublicKey, socket);
-
-      final SecretKey ownAesKey = cryptographyManager.getAesKey();
-
-      final String serverName = new NameExchange(socket, ownAesKey, cryptographyManager,
-          config.name(), executor).exchange();
-
-      final Connection serverConnection = Connection.create(serverName, socket, ownAesKey);
-
-      chatUtils.displayBanner("Connection Established with " + serverName);
-
-      chatUtils.displayOnScreen("Type `quit` to exit");
-
-      final CompletableFuture<Void> receiveMessagesFuture = CompletableFuture.runAsync(
-          () -> receiveMessages(serverConnection), executor);
-
-      final CompletableFuture<Void> sendMessagesFuture = CompletableFuture.runAsync(
-          () -> sendMessages(serverConnection), executor);
-
-      CompletableFuture.allOf(receiveMessagesFuture, sendMessagesFuture).join();
-
+      final Socket socket = createSocket();
+      final Connection serverConnection = establishConnection(socket);
+      startCommunication(serverConnection);
       serverConnection.close();
       reconnectPrompt();
     } catch (final IOException e) {
@@ -175,7 +151,70 @@ public final class Client implements AutoCloseable {
     } catch (final FailedExchangeException e) {
       throw new EndApplicationException(e);
     }
+  }
 
+  /**
+   * Establishes a connection to the server while exchanges cryptographic keys and names.
+   *
+   * @param socket The socket connected to the server.
+   * @return The {@link Connection} object representing the server connection.
+   * @throws FailedExchangeException If an error occurs during the key exchange process.
+   * @throws IOException             If an I/O error occurs during the connection process.
+   */
+  private Connection establishConnection(final Socket socket)
+      throws FailedExchangeException, IOException {
+    final SecretKey ownAesKey = exchangeCryptographyKeys(socket);
+    final String serverName = new NameExchange(socket, ownAesKey, cryptographyManager,
+        config.name(), executor).exchange();
+    return handleNewConnection(socket, serverName, ownAesKey);
+  }
+
+  /**
+   * Starts communication with the server by running message sending and receiving tasks
+   * asynchronously.
+   *
+   * @param serverConnection The connection to the server.
+   */
+  private void startCommunication(final Connection serverConnection) {
+    final CompletableFuture<Void> receiveMessagesFuture = CompletableFuture.runAsync(
+        () -> receiveMessages(serverConnection), executor);
+    final CompletableFuture<Void> sendMessagesFuture = CompletableFuture.runAsync(
+        () -> sendMessages(serverConnection), executor);
+    CompletableFuture.allOf(receiveMessagesFuture, sendMessagesFuture).join();
+  }
+
+
+  /**
+   * Creates and handles a new connection to the server by displaying connection messages and
+   * creating a {@link Connection} object.
+   *
+   * @param serverSocket The socket connected to the server.
+   * @param serverName   The name of the server.
+   * @param ownAesKey    The AES key used for encryption.
+   * @return The {@link Connection} object representing the server connection.
+   * @throws IOException If an I/O error occurs during the connection process.
+   */
+  private Connection handleNewConnection(final Socket serverSocket, final String serverName,
+      final SecretKey ownAesKey) throws IOException {
+    chatUtils.displayBanner("Connection Established with " + serverName);
+    chatUtils.displayOnScreen("Type `quit` to exit");
+    return Connection.create(serverName, serverSocket, ownAesKey);
+  }
+
+  /**
+   * Exchanges cryptographic keys with the server. This involves receiving the server's RSA public
+   * key and sending the client's AES key encrypted with the server's RSA public key.
+   *
+   * @param socket The socket connected to the server.
+   * @return The AES key used for encryption.
+   * @throws FailedExchangeException If an error occurs during the key exchange process.
+   * @throws IOException             If an I/O error occurs during the key exchange process.
+   */
+  private SecretKey exchangeCryptographyKeys(final Socket socket)
+      throws FailedExchangeException, IOException {
+    final PublicKey serverPublicKey = receiveRsaPublicKey(socket);
+    sendOwnEncryptedAesKey(serverPublicKey, socket);
+    return cryptographyManager.getAesKey();
   }
 
   /**
@@ -275,17 +314,14 @@ public final class Client implements AutoCloseable {
    */
   private void receiveMessages(final Connection serverConnection) {
     try {
-      serverConnection.readStream(cryptographyManager)
-          .map(transportMessage -> {
-            try {
-              return ConnectionMessageFactory.createFromString(transportMessage);
-            } catch (final InvalidMessageException e) {
-              LOGGER.debug(InvalidMessageException.DEFAULT_PROMPT, e);
-              return null;
-            }
-          })
-          .filter(Objects::nonNull)
-          .forEach(chatUtils::showNewMessage);
+      serverConnection.readStream(cryptographyManager).map(transportMessage -> {
+        try {
+          return ConnectionMessageFactory.createFromString(transportMessage);
+        } catch (final InvalidMessageException e) {
+          LOGGER.debug(InvalidMessageException.DEFAULT_PROMPT, e);
+          return null;
+        }
+      }).filter(Objects::nonNull).forEach(chatUtils::showNewMessage);
     } catch (final UncheckedIOException e) {
       LOGGER.debug("The connection with the server has ended");
     } finally {

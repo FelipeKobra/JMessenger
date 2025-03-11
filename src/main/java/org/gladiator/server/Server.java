@@ -148,7 +148,8 @@ public final class Server implements AutoCloseable {
   }
 
   /**
-   * Listens for incoming connections from clients.
+   * Listens for incoming client connections and handles them. This method runs in a loop until the
+   * server socket is closed or unbound.
    */
   private void listenToConnections() {
     LOGGER.debug("Listening to connections...");
@@ -157,21 +158,13 @@ public final class Server implements AutoCloseable {
       try {
         final Socket clientSocket = serverSocket.accept();
 
-        sendRsaPublicKey(clientSocket);
-
-        final SecretKey clientAesKey = receiveAesKey(clientSocket);
+        final SecretKey clientAesKey = exchangeCryptographyKeys(clientSocket);
         final String clientName = new NameExchange(clientSocket, clientAesKey,
             cryptographyManager,
             serverConfig.name(), executor).exchange();
 
-        final Connection clientConnection = Connection.create(clientName, clientSocket,
+        final Connection clientConnection = handleNewClientConnection(clientSocket, clientName,
             clientAesKey);
-
-        clientConnections.add(clientConnection);
-        final Message newConnectionMessage = new NewConnectionMessage(clientName);
-
-        chatUtils.showNewMessage(newConnectionMessage);
-        sendToOtherConnections(newConnectionMessage, clientConnection);
 
         receiveMessages(clientConnection);
       } catch (final IOException e) {
@@ -184,6 +177,47 @@ public final class Server implements AutoCloseable {
     }
 
     executor.shutdownNow();
+  }
+
+  /**
+   * Handles a new client connection by creating a {@link Connection} object, adding it to the list
+   * of client connections, and broadcasting a {@link NewConnectionMessage} to other clients.
+   *
+   * @param clientSocket The socket connected to the client.
+   * @param clientName   The name of the client.
+   * @param clientAesKey The AES key for encrypting/decrypting messages with the client.
+   * @return The Connection object representing the client's connection.
+   * @throws IOException If an I/O error occurs when creating the connection.
+   */
+  private Connection handleNewClientConnection(final Socket clientSocket, final String clientName,
+      final SecretKey clientAesKey) throws IOException {
+
+    final Connection clientConnection = Connection.create(clientName, clientSocket,
+        clientAesKey);
+
+    clientConnections.add(clientConnection);
+    final Message newConnectionMessage = new NewConnectionMessage(clientName);
+
+    chatUtils.showNewMessage(newConnectionMessage);
+    sendToOtherConnections(newConnectionMessage, clientConnection);
+
+    return clientConnection;
+
+  }
+
+  /**
+   * Exchanges cryptographic keys with the client. This involves sending the server's RSA public key
+   * to the client and receiving the client's AES key.
+   *
+   * @param clientSocket The socket connected to the client.
+   * @return The AES key received from the client.
+   * @throws FailedExchangeException If an error occurs during the key exchange process.
+   */
+  private SecretKey exchangeCryptographyKeys(final Socket clientSocket)
+      throws FailedExchangeException {
+
+    sendRsaPublicKey(clientSocket);
+    return receiveAesKey(clientSocket);
   }
 
   /**
@@ -209,6 +243,13 @@ public final class Server implements AutoCloseable {
     }
   }
 
+  /**
+   * Receives the AES key from the client.
+   *
+   * @param socket the socket connected to the client
+   * @return the AES key received from the client
+   * @throws UncheckedIOException if an error occurs while receiving the AES key
+   */
   private SecretKey receiveAesKey(final Socket socket) {
     try {
       final BufferedReader objectReader = IoUtils.createReader(socket);

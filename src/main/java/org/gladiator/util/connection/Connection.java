@@ -3,6 +3,7 @@ package org.gladiator.util.connection;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.net.Socket;
 import java.util.List;
 import java.util.Objects;
@@ -96,7 +97,8 @@ public final class Connection implements AutoCloseable {
    *
    * @return a Stream of lines from the input.
    */
-  public Stream<String> readStream(final CryptographyManager cryptographyManager) {
+  public Stream<String> readStream(final CryptographyManager cryptographyManager)
+      throws UncheckedIOException {
     return reader.lines().map(msg -> cryptographyManager.decrypt(aesKey, msg));
   }
 
