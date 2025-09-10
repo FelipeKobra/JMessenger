@@ -1,5 +1,6 @@
 package org.gladiator.util.connection.message.model;
 
+import jakarta.annotation.Nonnull;
 import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -67,6 +68,7 @@ public record SimpleMessage(String senderName, String message) implements Messag
    * @return The string representation of the message.
    */
   @Override
+  @Nonnull
   public String toString() {
     return senderName + ": " + message;
   }

@@ -1,5 +1,6 @@
 package org.gladiator.util.connection.message.model;
 
+import jakarta.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.gladiator.util.connection.message.ConnectionMessageType;
@@ -62,6 +63,7 @@ public record DisconnectMessage(String disconnectedUserName) implements Message 
    * @return The string representation of the message.
    */
   @Override
+  @Nonnull
   public String toString() {
     return "User " + disconnectedUserName + " disconnected";
   }
