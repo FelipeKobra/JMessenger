@@ -19,9 +19,7 @@ import org.gladiator.exception.EndApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Manages AES encryption and decryption operations.
- */
+/** Manages AES encryption and decryption operations. */
 public final class AesKeyManager {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AesKeyManager.class);
@@ -68,17 +66,14 @@ public final class AesKeyManager {
   /**
    * Encrypts the given message using the specified AES key.
    *
-   * <p>It uses GCM, so, after encrypting the message, it needs to add an initialization Vector
-   * (IV) to follow the GCM pattern and be really more secure and faster than some other
-   * cryptography modes, the IV is just a group of random bytes that are placed before the encrypted
-   * message
-   * </p>
+   * <p>It uses GCM, so, after encrypting the message, it needs to add an initialization Vector (IV)
+   * to follow the GCM pattern and be really more secure and faster than some other cryptography
+   * modes, the IV is just a group of random bytes that are placed before the encrypted message
    *
    * <p>It also needs to encode the message with Base64 before sending it via Socket, because, if
    * not, the message can reach the other end altered and not in the same way it was sent
-   * </p>
    *
-   * @param aesKey  The AES secret key.
+   * @param aesKey The AES secret key.
    * @param message The message to be encrypted.
    * @return The encrypted message as a Base64 encoded string.
    */
@@ -95,10 +90,15 @@ public final class AesKeyManager {
       final byte[] encryptedMessageBytesWithIv = addIvToMessage(iv, encryptedMessageBytes);
 
       return Base64.getEncoder().encodeToString(encryptedMessageBytesWithIv);
-    } catch (final InvalidKeyException | IllegalBlockSizeException | BadPaddingException
-                   | InvalidAlgorithmParameterException | NoSuchPaddingException
-                   | NoSuchAlgorithmException e) {
-      return handleException("Error during a AES encrypt with message: (" + message + ")", e,
+    } catch (final InvalidKeyException
+        | IllegalBlockSizeException
+        | BadPaddingException
+        | InvalidAlgorithmParameterException
+        | NoSuchPaddingException
+        | NoSuchAlgorithmException e) {
+      return handleException(
+          "Error during a AES encrypt with message: (" + message + ")",
+          e,
           Base64.getEncoder().encodeToString(message.getBytes(StandardCharsets.UTF_8)));
     }
   }
@@ -106,11 +106,11 @@ public final class AesKeyManager {
   /**
    * Decrypts the given message using the specified AES key.
    *
-   * <p>This method first decodes de Base64 message and extracts the initialization vector (IV)
-   * from the encrypted message to decrypt it correctly. The IV is necessary to follow the GCM
-   * pattern used during encryption.</p>
+   * <p>This method first decodes de Base64 message and extracts the initialization vector (IV) from
+   * the encrypted message to decrypt it correctly. The IV is necessary to follow the GCM pattern
+   * used during encryption.
    *
-   * @param aesKey  The AES secret key.
+   * @param aesKey The AES secret key.
    * @param message The message to be decrypted.
    * @return The decrypted message as a string.
    */
@@ -125,14 +125,22 @@ public final class AesKeyManager {
       final AlgorithmParameterSpec paramSpec = new GCMParameterSpec(GCM_SPEC_SIZE, iv);
       cipher.init(Cipher.DECRYPT_MODE, aesKey, paramSpec);
 
-      final byte[] decryptedMessageBytes = cipher.doFinal(decodedMessageBytes,
-          GCM_INIT_VECTOR_SIZE, decodedMessageBytes.length - GCM_INIT_VECTOR_SIZE);
+      final byte[] decryptedMessageBytes =
+          cipher.doFinal(
+              decodedMessageBytes,
+              GCM_INIT_VECTOR_SIZE,
+              decodedMessageBytes.length - GCM_INIT_VECTOR_SIZE);
 
       return new String(decryptedMessageBytes, StandardCharsets.UTF_8);
-    } catch (final InvalidKeyException | InvalidAlgorithmParameterException
-                   | IllegalBlockSizeException | BadPaddingException | NoSuchPaddingException
-                   | NoSuchAlgorithmException e) {
-      return handleException("Error during a AES decrypt with message: " + message, e,
+    } catch (final InvalidKeyException
+        | InvalidAlgorithmParameterException
+        | IllegalBlockSizeException
+        | BadPaddingException
+        | NoSuchPaddingException
+        | NoSuchAlgorithmException e) {
+      return handleException(
+          "Error during a AES decrypt with message: " + message,
+          e,
           new String(Base64.getDecoder().decode(message), StandardCharsets.UTF_8));
     }
   }
@@ -140,14 +148,14 @@ public final class AesKeyManager {
   /**
    * Handles exceptions by logging the error and returning the specified message.
    *
-   * @param <T>           The type of the return message.
-   * @param errorWarning  The error warning message.
-   * @param ex            The exception that occurred.
+   * @param <T> The type of the return message.
+   * @param errorWarning The error warning message.
+   * @param ex The exception that occurred.
    * @param returnMessage The message to be returned.
    * @return The specified return message.
    */
-  private <T> T handleException(final String errorWarning, final Throwable ex,
-      final T returnMessage) {
+  private <T> T handleException(
+      final String errorWarning, final Throwable ex, final T returnMessage) {
     LOGGER.error(errorWarning, ex);
     return returnMessage;
   }
@@ -178,7 +186,7 @@ public final class AesKeyManager {
   /**
    * Adds the initialization vector (IV) to the given message bytes.
    *
-   * @param iv           The initialization vector.
+   * @param iv The initialization vector.
    * @param messageBytes The message bytes.
    * @return The message bytes with the IV prepended.
    */

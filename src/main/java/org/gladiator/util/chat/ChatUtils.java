@@ -1,6 +1,7 @@
 package org.gladiator.util.chat;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Objects;
 import org.gladiator.util.connection.message.ConnectionMessageType;
 import org.gladiator.util.connection.message.model.Message;
@@ -17,8 +18,8 @@ import org.slf4j.LoggerFactory;
  */
 public final class ChatUtils implements AutoCloseable {
 
-  public static final String USER_INTERRUPT_MESSAGE = "User stopped the console reading,"
-      + " probably by pressing CTRL + C";
+  public static final String USER_INTERRUPT_MESSAGE =
+      "User stopped the console reading," + " probably by pressing CTRL + C";
   private static final Logger LOGGER = LoggerFactory.getLogger(ChatUtils.class);
   private final String userPrompt;
   private final Terminal terminal;
@@ -43,8 +44,11 @@ public final class ChatUtils implements AutoCloseable {
     LineReader lineReader = null;
     try {
       terminal = TerminalBuilder.terminal();
-      lineReader = LineReaderBuilder.builder().terminal(terminal)
-          .variable(LineReader.DISABLE_HISTORY, true).build();
+      lineReader =
+          LineReaderBuilder.builder()
+              .terminal(terminal)
+              .variable(LineReader.DISABLE_HISTORY, true)
+              .build();
     } catch (final IOException e) {
       LOGGER.error("Error creating client terminal: {}", e.getMessage(), e);
     }
@@ -76,7 +80,6 @@ public final class ChatUtils implements AutoCloseable {
 
     showBufferedUserPrompt();
   }
-
 
   /**
    * Reads user input from the console using the default prompt.
@@ -117,8 +120,7 @@ public final class ChatUtils implements AutoCloseable {
    * @return The user input.
    */
   public String askUserOption(final String optionName, final String defaultOption) {
-    String userInput = getUserInput(
-        "Type the " + optionName + " (" + defaultOption + "): ");
+    String userInput = getUserInput("Type the " + optionName + " (" + defaultOption + "): ");
 
     if (userInput.isBlank()) {
       userInput = defaultOption;
@@ -155,6 +157,18 @@ public final class ChatUtils implements AutoCloseable {
     return userOption;
   }
 
+  /**
+   * Prompts the user for a binary (yes/no) option.
+   *
+   * <p>This method was created to get "yes or no" options from the user. It shows the
+   * provided prompt along with a default-choice hint ("Y/n" when {@code defaultOption} is
+   * {@code true}, or "y/N" when {@code false}). The user's input is read, converted to upper case
+   * using {@link Locale#ROOT}, and considered affirmative only if it equals {@code "Y"}.
+   *
+   * @param optionPrompt  the prompt message shown to the user
+   * @param defaultOption the default boolean choice; {@code true} means default is "Y"
+   * @return {@code true} if the user answered 'Y' (case-insensitive), {@code false} otherwise
+   */
   public boolean askUserBinaryOption(final String optionPrompt, final boolean defaultOption) {
     final String defaultOptionTip;
 

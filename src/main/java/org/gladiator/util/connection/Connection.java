@@ -31,6 +31,7 @@ public final class Connection implements AutoCloseable {
    * connection).
    */
   private final String name;
+
   private final BufferedReader reader;
   private final PrintWriter writer;
   private final Socket socket;
@@ -39,37 +40,40 @@ public final class Connection implements AutoCloseable {
   /**
    * Constructs a new Connection.
    *
-   * @param name   The name of the client.
+   * @param name The name of the client.
    * @param socket The socket for the connection.
    * @param reader The BufferedReader for reading input.
    * @param writer The PrintWriter for writing output.
-   * @throws NullPointerException     if any of the parameters are null.
+   * @throws NullPointerException if any of the parameters are null.
    * @throws IllegalArgumentException if the name is blank.
    */
-  private Connection(final String name, final BufferedReader reader, final PrintWriter writer,
-      final Socket socket, final SecretKey aesKey) {
+  private Connection(
+      final String name,
+      final BufferedReader reader,
+      final PrintWriter writer,
+      final Socket socket,
+      final SecretKey aesKey) {
     Validate.notBlank(name);
     this.aesKey = aesKey;
     this.name = name;
     this.reader = reader;
     this.writer = Objects.requireNonNull(writer, "writer parameter on Connection must not be null");
-    this.socket = Objects.requireNonNull(socket,
-        "socket parameter on Connection must not be null");
+    this.socket = Objects.requireNonNull(socket, "socket parameter on Connection must not be null");
   }
 
   /**
    * Creates a new Connection instance.
    *
-   * @param name   The name of the client.
+   * @param name The name of the client.
    * @param socket The socket for the connection.
    * @param aesKey The AES secret key for encryption and decryption.
    * @return A new Connection instance.
    * @throws IOException If an I/O error occurs when creating the reader or writer.
    */
-  public static Connection create(final String name, final Socket socket,
-      final SecretKey aesKey) throws IOException {
-    return new Connection(name, IoUtils.createReader(socket), IoUtils.createWriter(socket),
-        socket, aesKey);
+  public static Connection create(final String name, final Socket socket, final SecretKey aesKey)
+      throws IOException {
+    return new Connection(
+        name, IoUtils.createReader(socket), IoUtils.createWriter(socket), socket, aesKey);
   }
 
   /**
@@ -108,8 +112,8 @@ public final class Connection implements AutoCloseable {
    * @param message the message to write to the output stream
    */
   public void writeOutput(final Message message, final CryptographyManager cryptographyManager) {
-    final String encryptedMessage = cryptographyManager.encrypt(aesKey,
-        message.toTransportString());
+    final String encryptedMessage =
+        cryptographyManager.encrypt(aesKey, message.toTransportString());
     writer.println(encryptedMessage);
   }
 

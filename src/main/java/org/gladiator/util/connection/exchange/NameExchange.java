@@ -15,9 +15,7 @@ import org.gladiator.util.crypto.CryptographyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Handles the exchange of names between two endpoints over a socket connection.
- */
+/** Handles the exchange of names between two endpoints over a socket connection. */
 public class NameExchange {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(NameExchange.class);
@@ -31,17 +29,20 @@ public class NameExchange {
   /**
    * Constructs a NameExchange with the specified parameters.
    *
-   * @param socket              The socket for the exchange.
-   * @param aesKey              The AES secret key for encryption/decryption.
+   * @param socket The socket for the exchange.
+   * @param aesKey The AES secret key for encryption/decryption.
    * @param cryptographyManager The manager for cryptographic operations.
-   * @param ownName             The name to be sent to the other endpoint.
-   * @param executor            The executor service for asynchronous operations.
+   * @param ownName The name to be sent to the other endpoint.
+   * @param executor The executor service for asynchronous operations.
    */
-  public NameExchange(final Socket socket, final SecretKey aesKey,
-      final CryptographyManager cryptographyManager, final String ownName,
+  public NameExchange(
+      final Socket socket,
+      final SecretKey aesKey,
+      final CryptographyManager cryptographyManager,
+      final String ownName,
       final ExecutorService executor) {
-    this.socket = Objects.requireNonNull(socket,
-        "The socket of the name exchange must not be null");
+    this.socket =
+        Objects.requireNonNull(socket, "The socket of the name exchange must not be null");
     this.aesKey = aesKey;
     this.cryptographyManager = cryptographyManager;
     this.ownName = ownName;
@@ -59,11 +60,11 @@ public class NameExchange {
       final PrintWriter writer = IoUtils.createWriter(socket);
       final BufferedReader reader = IoUtils.createReader(socket);
 
-      final CompletableFuture<Void> sendOwnNameFuture = CompletableFuture.runAsync(
-          () -> sendName(writer), executor);
+      final CompletableFuture<Void> sendOwnNameFuture =
+          CompletableFuture.runAsync(() -> sendName(writer), executor);
 
-      final CompletableFuture<String> receiveNameFuture = CompletableFuture.supplyAsync(
-          () -> receiveName(reader), executor);
+      final CompletableFuture<String> receiveNameFuture =
+          CompletableFuture.supplyAsync(() -> receiveName(reader), executor);
 
       CompletableFuture.allOf(sendOwnNameFuture, receiveNameFuture).join();
       return receiveNameFuture.join();
@@ -79,8 +80,7 @@ public class NameExchange {
    * @param writer The PrintWriter to send the name.
    */
   private void sendName(final PrintWriter writer) {
-    final String encryptedOwnName = cryptographyManager.encrypt(aesKey,
-        ownName);
+    final String encryptedOwnName = cryptographyManager.encrypt(aesKey, ownName);
     writer.println(encryptedOwnName);
     final String logMessage = "Sent name " + ownName;
     LOGGER.debug(logMessage);
@@ -95,8 +95,8 @@ public class NameExchange {
   private String receiveName(final BufferedReader reader) {
     final String otherEndName;
     try {
-      final String encryptedOtherEndName = Objects.requireNonNull(reader.readLine(),
-          "Error during name receive, it is null");
+      final String encryptedOtherEndName =
+          Objects.requireNonNull(reader.readLine(), "Error during name receive, it is null");
       otherEndName = cryptographyManager.decrypt(aesKey, encryptedOtherEndName);
       final String logMessage = "Received name: " + otherEndName + ".";
       LOGGER.debug(logMessage);

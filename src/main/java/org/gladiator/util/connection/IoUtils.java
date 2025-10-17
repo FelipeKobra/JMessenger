@@ -18,11 +18,8 @@ import java.nio.charset.StandardCharsets;
  */
 public final class IoUtils {
 
-  /**
-   * Private constructor to prevent instantiation.
-   */
-  private IoUtils() {
-  }
+  /** Private constructor to prevent instantiation. */
+  private IoUtils() {}
 
   /**
    * Creates a PrintWriter for the given socket.

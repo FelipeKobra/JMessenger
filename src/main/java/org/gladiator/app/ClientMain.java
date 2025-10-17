@@ -1,6 +1,5 @@
 package org.gladiator.app;
 
-
 import org.gladiator.client.Client;
 import org.gladiator.exception.EndApplicationException;
 import org.gladiator.util.chat.ChatUtils;
@@ -15,8 +14,7 @@ public final class ClientMain {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientMain.class);
 
-  private ClientMain() {
-  }
+  private ClientMain() {}
 
   /**
    * The main method that starts the client application.
@@ -39,4 +37,3 @@ public final class ClientMain {
     chatUtils.close();
   }
 }
-

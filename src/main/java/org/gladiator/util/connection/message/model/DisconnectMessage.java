@@ -17,7 +17,7 @@ public record DisconnectMessage(String disconnectedUserName) implements Message 
    * Constructs a new ConnectionMessage.
    *
    * @param disconnectedUserName The name of the sender.
-   * @throws NullPointerException     if any of the parameters are null.
+   * @throws NullPointerException if any of the parameters are null.
    * @throws IllegalArgumentException if the senderName is blank.
    */
   public DisconnectMessage {
@@ -29,9 +29,9 @@ public record DisconnectMessage(String disconnectedUserName) implements Message 
    *
    * @param message The transport string.
    * @return The created NewConnectionMessage.
-   * @throws NullPointerException     if the message is null.
+   * @throws NullPointerException if the message is null.
    * @throws IllegalArgumentException if the message is blank or does not match the expected
-   *                                  pattern.
+   *     pattern.
    */
   public static Message fromTransportString(final String message) {
     Validate.notBlank(message);

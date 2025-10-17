@@ -7,7 +7,6 @@ import com.sshtools.porter.UPnP.Protocol;
 import jakarta.annotation.Nullable;
 import java.io.UncheckedIOException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import org.gladiator.util.thread.NamedVirtualThreadExecutorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,61 +26,56 @@ public final class PortMapper implements AutoCloseable {
   @Nullable
   private Gateway gateway;
 
-  private PortMapper(final ExecutorService executor, final int mappedPort,
-      final Discovery discovery) {
+  private PortMapper(
+      final ExecutorService executor, final int mappedPort, final Discovery discovery) {
     this.executor = executor;
     this.mappedPort = mappedPort;
     this.discovery = discovery;
   }
 
   /**
-   * Creates a default {@link PortMapper} instance with a virtual thread executor and a discovery
-   * instance.
+   * Creates a default {@link PortMapper} instance with the specified port to map and starts the
+   * UPnP discovery.
    *
    * @return A new {@link PortMapper} instance.
    */
   public static PortMapper createDefault(final int portToMap) {
     final ExecutorService executor = NamedVirtualThreadExecutorFactory.create("port_mapper");
 
-    final Discovery discovery = new DiscoveryBuilder().withSoTimeout(600)
-        .withoutShutdownHooks()
-        .onGateway(gw -> LOGGER.debug("Gateway found: {}", gw.ip().getHostAddress()))
-        .build();
+    final Discovery discovery =
+        new DiscoveryBuilder()
+            .withSoTimeout(600)
+            .withoutShutdownHooks()
+            .onGateway(gw -> LOGGER.debug("Gateway found: {}", gw.ip().getHostAddress()))
+            .build();
 
-    final PortMapper portMapper = new PortMapper(executor, portToMap, discovery);
-
-    executor.execute(() -> {
-      try {
-        portMapper.setGateway(discovery.gateway().orElse(null));
-      } catch (final IllegalStateException | UncheckedIOException e) {
-        LOGGER.debug(DISCOVERY_PROCESS_INTERRUPTED, e);
-      }
-    });
-
-    return portMapper;
+    return new PortMapper(executor, portToMap, discovery);
   }
 
   /**
-   * Opens the {@link PortMapper} port on the router using the configured gateway.
+   * Waits to find the gateway and pens the {@link PortMapper} port on it.
    */
   public void openPort() {
-    executor.execute(() -> {
-      try {
-        while (null == gateway) {
-          discovery.awaitCompletion(1000, TimeUnit.MILLISECONDS);
-        }
+    executor.execute(
+        () -> {
+          try {
+            setGateway(discovery.gateway().orElse(null));
 
-        final boolean mapped = gateway.map(mappedPort, protocol);
-        if (mapped) {
-          LOGGER.debug("Port {} mapped with success", mappedPort);
-        }
+            if (null == gateway) {
+              LOGGER.debug("No UPnP gateway device found");
+              return;
+            }
 
-      } catch (final IllegalStateException | UncheckedIOException e) {
-        LOGGER.debug(DISCOVERY_PROCESS_INTERRUPTED, e);
-      }
-    });
+            final boolean mapped = gateway.map(mappedPort, protocol);
+            if (mapped) {
+              LOGGER.debug("Port {} mapped with success", mappedPort);
+            }
+
+          } catch (final IllegalStateException | UncheckedIOException e) {
+            LOGGER.debug(DISCOVERY_PROCESS_INTERRUPTED, e);
+          }
+        });
   }
-
 
   /**
    * Closes the port on the router for the specified port number using the configured gateway.

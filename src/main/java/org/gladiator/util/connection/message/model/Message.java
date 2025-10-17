@@ -2,14 +2,10 @@ package org.gladiator.util.connection.message.model;
 
 import org.gladiator.util.connection.message.ConnectionMessageType;
 
-/**
- * Interface representing a message.
- */
+/** Interface representing a message. */
 public interface Message {
 
-  /**
-   * The delimiter used to split message components.
-   */
+  /** The delimiter used to split message components. */
   String MESSAGE_SPLITTER = ";";
 
   /**

@@ -1,22 +1,14 @@
 package org.gladiator.util.connection.message;
 
-/**
- * Enum representing the types of connection messages.
- */
+/** Enum representing the types of connection messages. */
 public enum ConnectionMessageType {
-  /**
-   * Represents a simple message type.
-   */
+  /** Represents a simple message type. */
   SIMPLE(false),
 
-  /**
-   * Represents a new connection message type.
-   */
+  /** Represents a new connection message type. */
   NEW_CONNECTION(true),
 
-  /**
-   * Represents a disconnection message type.
-   */
+  /** Represents a disconnection message type. */
   DISCONNECTION(true);
 
   private final boolean serverSentOnly;

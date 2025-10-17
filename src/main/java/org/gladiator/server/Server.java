@@ -41,9 +41,7 @@ import org.jline.reader.UserInterruptException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Represents a server that manages connections with clients.
- */
+/** Represents a server that manages connections with clients. */
 public final class Server implements AutoCloseable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
@@ -60,14 +58,17 @@ public final class Server implements AutoCloseable {
    * Constructs a new Server instance.
    *
    * @param cryptographyManager the RSA cryptography keys manager
-   * @param serverConfig        the server configuration
-   * @param serverSocket        the server socket
-   * @param chatUtils           the chat utilities
-   * @param executor            the executor service
+   * @param serverConfig the server configuration
+   * @param serverSocket the server socket
+   * @param chatUtils the chat utilities
+   * @param executor the executor service
    */
-  private Server(final CryptographyManager cryptographyManager, final ServerConfig serverConfig,
+  private Server(
+      final CryptographyManager cryptographyManager,
+      final ServerConfig serverConfig,
       final ServerSocket serverSocket,
-      final ChatUtils chatUtils, final ExecutorService executor) {
+      final ChatUtils chatUtils,
+      final ExecutorService executor) {
     this.cryptographyManager = cryptographyManager;
     this.serverConfig = serverConfig;
     this.serverSocket = serverSocket;
@@ -81,8 +82,7 @@ public final class Server implements AutoCloseable {
    * @return A new server instance.
    * @throws EndApplicationException If an error occurs during server creation.
    */
-  public static Server createServer()
-      throws EndApplicationException {
+  public static Server createServer() throws EndApplicationException {
 
     final Server server;
     final ChatUtils chatUtils = ChatUtils.create(">");
@@ -105,7 +105,7 @@ public final class Server implements AutoCloseable {
   /**
    * Creates a ServerSocket bound to the specified port.
    *
-   * @param port      the port number to bind the ServerSocket to
+   * @param port the port number to bind the ServerSocket to
    * @param chatUtils the ChatUtils instance for user interaction
    * @return a ServerSocket bound to the specified port
    * @throws EndApplicationException if an error occurs during ServerSocket creation
@@ -126,9 +126,7 @@ public final class Server implements AutoCloseable {
     return serverSocket;
   }
 
-  /**
-   * Starts the server, begins listening and broadcasting for connections.
-   */
+  /** Starts the server, begins listening and broadcasting for connections. */
   public void runServer() {
     LOGGER.info("Server Started...");
 
@@ -161,12 +159,13 @@ public final class Server implements AutoCloseable {
         final Socket clientSocket = serverSocket.accept();
 
         final SecretKey clientAesKey = exchangeCryptographyKeys(clientSocket);
-        final String clientName = new NameExchange(clientSocket, clientAesKey,
-            cryptographyManager,
-            serverConfig.name(), executor).exchange();
+        final String clientName =
+            new NameExchange(
+                    clientSocket, clientAesKey, cryptographyManager, serverConfig.name(), executor)
+                .exchange();
 
-        final Connection clientConnection = handleNewClientConnection(clientSocket, clientName,
-            clientAesKey);
+        final Connection clientConnection =
+            handleNewClientConnection(clientSocket, clientName, clientAesKey);
 
         receiveMessages(clientConnection);
       } catch (final IOException e) {
@@ -186,16 +185,16 @@ public final class Server implements AutoCloseable {
    * of client connections, and broadcasting a {@link NewConnectionMessage} to other clients.
    *
    * @param clientSocket The socket connected to the client.
-   * @param clientName   The name of the client.
+   * @param clientName The name of the client.
    * @param clientAesKey The AES key for encrypting/decrypting messages with the client.
    * @return The Connection object representing the client's connection.
    * @throws IOException If an I/O error occurs when creating the connection.
    */
-  private Connection handleNewClientConnection(final Socket clientSocket, final String clientName,
-      final SecretKey clientAesKey) throws IOException {
+  private Connection handleNewClientConnection(
+      final Socket clientSocket, final String clientName, final SecretKey clientAesKey)
+      throws IOException {
 
-    final Connection clientConnection = Connection.create(clientName, clientSocket,
-        clientAesKey);
+    final Connection clientConnection = Connection.create(clientName, clientSocket, clientAesKey);
 
     clientConnections.add(clientConnection);
     final Message newConnectionMessage = new NewConnectionMessage(clientName);
@@ -204,7 +203,6 @@ public final class Server implements AutoCloseable {
     sendToOtherConnections(newConnectionMessage, clientConnection);
 
     return clientConnection;
-
   }
 
   /**
@@ -226,8 +224,7 @@ public final class Server implements AutoCloseable {
    * Sends the server's RSA public key to the client.
    *
    * <p>Note: The public key is sent as bytes instead of an object because native images do not
-   * support the deserialization of PublicKey objects due to the absence of a suitable
-   * constructor.</p>
+   * support the deserialization of PublicKey objects due to the absence of a suitable constructor.
    *
    * @param socket the socket connected to the client
    * @throws FailedExchangeException if an error occurs while sending the RSA public key
@@ -267,9 +264,7 @@ public final class Server implements AutoCloseable {
     }
   }
 
-  /**
-   * Broadcasts messages to all connected clients.
-   */
+  /** Broadcasts messages to all connected clients. */
   private void broadcastToConnections() {
     LOGGER.debug("Broadcasting to connections...");
     LOGGER.info("Type `quit` to exit");
@@ -303,8 +298,9 @@ public final class Server implements AutoCloseable {
   private void broadcastMessageToConnections(final Message message) {
     final List<CompletableFuture<Void>> futures = new ArrayList<>();
     for (final Connection connection : clientConnections) {
-      final CompletableFuture<Void> future = CompletableFuture.runAsync(
-          () -> connection.writeOutput(message, cryptographyManager), executor);
+      final CompletableFuture<Void> future =
+          CompletableFuture.runAsync(
+              () -> connection.writeOutput(message, cryptographyManager), executor);
       futures.add(future);
     }
     CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
@@ -318,15 +314,16 @@ public final class Server implements AutoCloseable {
   private void receiveMessages(final Connection clientConnection) {
     final String clientName = clientConnection.getName();
 
-    executor.execute(() -> {
-      try {
-        processMessages(clientConnection);
-      } catch (final UncheckedIOException e) {
-        LOGGER.debug("Connection with {} ended abruptly", clientName, e);
-      } finally {
-        closeConnection(clientConnection);
-      }
-    });
+    executor.execute(
+        () -> {
+          try {
+            processMessages(clientConnection);
+          } catch (final UncheckedIOException e) {
+            LOGGER.debug("Connection with {} ended abruptly", clientName, e);
+          } finally {
+            closeConnection(clientConnection);
+          }
+        });
   }
 
   /**
@@ -336,41 +333,46 @@ public final class Server implements AutoCloseable {
    * @param connection The Connection object representing the client's connection.
    */
   private void processMessages(final Connection connection) {
-    connection.readStream(cryptographyManager)
-        .map(transportMessage -> {
-          try {
-            return ConnectionMessageFactory.createFromString(transportMessage);
-          } catch (final InvalidMessageException e) {
-            LOGGER.debug(InvalidMessageException.DEFAULT_PROMPT, e);
-            return null;
-          }
-        })
+    connection
+        .readStream(cryptographyManager)
+        .map(
+            transportMessage -> {
+              try {
+                return ConnectionMessageFactory.createFromString(transportMessage);
+              } catch (final InvalidMessageException e) {
+                LOGGER.debug(InvalidMessageException.DEFAULT_PROMPT, e);
+                return null;
+              }
+            })
         .filter(Objects::nonNull)
         .filter(new NonServerSideOnlyPredicate())
-        .forEach(msg -> {
-          chatUtils.showNewMessage(msg);
-          sendToOtherConnections(msg, connection);
-        });
+        .forEach(
+            msg -> {
+              chatUtils.showNewMessage(msg);
+              sendToOtherConnections(msg, connection);
+            });
   }
 
   /**
    * Sends a message to all connected clients, except the client that sent the message.
    *
-   * @param message    The message to be sent.
+   * @param message The message to be sent.
    * @param connection The connection to the client that sent the message.
    */
   private void sendToOtherConnections(final Message message, final Connection connection) {
     clientConnections.stream()
         .filter(Predicate.not(connection::equals))
-        .forEach(otherConnection -> {
-          final CompletableFuture<Void> sendMessageFuture = CompletableFuture.runAsync(
-              () -> otherConnection.writeOutput(message, cryptographyManager), executor);
-          sendMessageFuture.exceptionally(ex -> {
-            LOGGER.error("Error writing output to connection", ex);
-            return null;
-          });
-        });
-
+        .forEach(
+            otherConnection -> {
+              final CompletableFuture<Void> sendMessageFuture =
+                  CompletableFuture.runAsync(
+                      () -> otherConnection.writeOutput(message, cryptographyManager), executor);
+              sendMessageFuture.exceptionally(
+                  ex -> {
+                    LOGGER.error("Error writing output to connection", ex);
+                    return null;
+                  });
+            });
   }
 
   /**
@@ -392,10 +394,7 @@ public final class Server implements AutoCloseable {
     }
   }
 
-
-  /**
-   * Closes the server socket.
-   */
+  /** Closes the server socket. */
   private void closeServerSocket() {
     try {
       serverSocket.close();
@@ -404,23 +403,21 @@ public final class Server implements AutoCloseable {
     }
   }
 
-  /**
-   * Closes the server and all client connections.
-   */
+  /** Closes the server and all client connections. */
   @Override
   public void close() {
     LOGGER.info("Closing all connections...");
 
     isClosingManually.set(true);
 
-    final CompletableFuture<?>[] closeConnectionsFuture = clientConnections.stream()
-        .map(connection -> CompletableFuture.runAsync(connection::close))
-        .toArray(CompletableFuture<?>[]::new);
+    final CompletableFuture<?>[] closeConnectionsFuture =
+        clientConnections.stream()
+            .map(connection -> CompletableFuture.runAsync(connection::close))
+            .toArray(CompletableFuture<?>[]::new);
 
     closeServerSocket();
     chatUtils.close();
     executor.shutdownNow();
     CompletableFuture.allOf(closeConnectionsFuture).join();
   }
-
 }

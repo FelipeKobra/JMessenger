@@ -5,9 +5,7 @@ import java.security.PublicKey;
 import javax.crypto.SecretKey;
 import org.gladiator.exception.EndApplicationException;
 
-/**
- * Manages cryptographic operations using AES and RSA algorithms.
- */
+/** Manages cryptographic operations using AES and RSA algorithms. */
 public final class CryptographyManager {
 
   private final AesKeyManager aesKeyManager;
@@ -16,11 +14,11 @@ public final class CryptographyManager {
   /**
    * Constructs a CryptographyManager with the specified AES and RSA key managers.
    *
-   * @param aesKeyManager  The AES key manager.
+   * @param aesKeyManager The AES key manager.
    * @param rsaKeysManager The RSA key manager.
    */
-  private CryptographyManager(final AesKeyManager aesKeyManager,
-      final RsaKeysManager rsaKeysManager) {
+  private CryptographyManager(
+      final AesKeyManager aesKeyManager, final RsaKeysManager rsaKeysManager) {
     this.aesKeyManager = aesKeyManager;
     this.rsaKeysManager = rsaKeysManager;
   }
@@ -31,8 +29,7 @@ public final class CryptographyManager {
    * @return A new CryptographyManager instance.
    * @throws EndApplicationException If an error occurs during creation.
    */
-  public static CryptographyManager create()
-      throws EndApplicationException {
+  public static CryptographyManager create() throws EndApplicationException {
     final AesKeyManager aesKeyManager = AesKeyManager.create();
     final RsaKeysManager rsaKeysManager = RsaKeysManager.create();
 
@@ -42,7 +39,7 @@ public final class CryptographyManager {
   /**
    * Encrypts the given message using the specified AES key.
    *
-   * @param aesKey  The AES secret key.
+   * @param aesKey The AES secret key.
    * @param message The message to be encrypted.
    * @return The encrypted message as a Base64 encoded string.
    */
@@ -53,7 +50,7 @@ public final class CryptographyManager {
   /**
    * Decrypts the given message using the specified AES key.
    *
-   * @param aesKey  The AES secret key.
+   * @param aesKey The AES secret key.
    * @param message The message to be decrypted.
    * @return The decrypted message as a string.
    */
@@ -65,7 +62,7 @@ public final class CryptographyManager {
    * Encrypts the given AES key using the specified RSA public key.
    *
    * @param publicKey The RSA public key.
-   * @param aesKey    The AES secret key.
+   * @param aesKey The AES secret key.
    * @return The encrypted AES key as a Base64 encoded string.
    */
   public String encryptRsa(final PublicKey publicKey, final Key aesKey) {
@@ -99,5 +96,4 @@ public final class CryptographyManager {
   public Key getRsaPublicKey() {
     return rsaKeysManager.getPublicKey();
   }
-
 }

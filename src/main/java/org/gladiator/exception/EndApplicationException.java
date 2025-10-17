@@ -1,8 +1,6 @@
 package org.gladiator.exception;
 
-/**
- * Exception thrown to indicate that the application should end.
- */
+/** Exception thrown to indicate that the application should end. */
 public class EndApplicationException extends Exception {
 
   /**
@@ -27,7 +25,7 @@ public class EndApplicationException extends Exception {
    * Constructs a new EndApplicationException with the specified message and cause.
    *
    * @param message the detail message
-   * @param cause   the cause of the exception
+   * @param cause the cause of the exception
    */
   public EndApplicationException(final String message, final Throwable cause) {
     super(message, cause);
