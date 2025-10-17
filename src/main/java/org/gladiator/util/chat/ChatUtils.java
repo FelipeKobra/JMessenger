@@ -94,7 +94,7 @@ public final class ChatUtils implements AutoCloseable {
    * @return The user input.
    */
   public String getUserInput(final String prompt) {
-    return lineReader.readLine(prompt);
+    return lineReader.readLine(prompt).trim();
   }
 
   /**
@@ -136,12 +136,39 @@ public final class ChatUtils implements AutoCloseable {
    * @param maxOptionLength The maximum length of the option.
    * @return The user input.
    */
-  public String askUserOption(final String optionName, final String defaultOption,
-      final int maxOptionLength) {
-    return askUserOption("Type the " + optionName + " [max size: " + maxOptionLength + "]",
-        defaultOption);
+  public String askUserOption(
+      final String optionName, final String defaultOption, final int maxOptionLength) {
+    final String userOption =
+        askUserOption(optionName + " [max size: " + maxOptionLength + "]", defaultOption);
+
+    if (userOption.length() > maxOptionLength) {
+      final String truncatedOption = userOption.substring(0, maxOptionLength);
+      displayOnScreen(
+          "Input has more than "
+              + maxOptionLength
+              + " characters and will be truncated to: \""
+              + truncatedOption
+              + "\"");
+      return truncatedOption;
+    }
+
+    return userOption;
   }
 
+  public boolean askUserBinaryOption(final String optionPrompt, final boolean defaultOption) {
+    final String defaultOptionTip;
+
+    if (defaultOption) {
+      defaultOptionTip = "Y/n";
+    } else {
+      defaultOptionTip = "y/N";
+    }
+
+    final String userInput = getUserInput(optionPrompt + " " + defaultOptionTip + ": ");
+    final String upperUserInput = userInput.toUpperCase(Locale.ROOT);
+
+    return "Y".equals(upperUserInput);
+  }
 
   /**
    * Prints a string with a decorative border.

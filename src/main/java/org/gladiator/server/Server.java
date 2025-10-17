@@ -135,13 +135,15 @@ public final class Server implements AutoCloseable {
     final int serverPort = serverConfig.port();
 
     try (final PortMapper portMapper = PortMapper.createDefault(serverPort)) {
-      portMapper.openPort();
+      if (serverConfig.enableUpnp()) {
+        portMapper.openPort();
+      }
 
-      final CompletableFuture<Void> listenToConnectionsFuture = CompletableFuture.runAsync(
-          this::listenToConnections, executor);
+      final CompletableFuture<Void> listenToConnectionsFuture =
+          CompletableFuture.runAsync(this::listenToConnections, executor);
 
-      final CompletableFuture<Void> broadcastToConnectionsFuture = CompletableFuture.runAsync(
-          this::broadcastToConnections, executor);
+      final CompletableFuture<Void> broadcastToConnectionsFuture =
+          CompletableFuture.runAsync(this::broadcastToConnections, executor);
 
       CompletableFuture.allOf(listenToConnectionsFuture, broadcastToConnectionsFuture).join();
     }
