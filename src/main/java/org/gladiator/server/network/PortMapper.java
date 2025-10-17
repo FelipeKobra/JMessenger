@@ -11,9 +11,7 @@ import org.gladiator.util.thread.NamedVirtualThreadExecutorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Utility class for managing port mappings using UPnP.
- */
+/** Utility class for managing port mappings using UPnP. */
 public final class PortMapper implements AutoCloseable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(PortMapper.class);
@@ -23,8 +21,7 @@ public final class PortMapper implements AutoCloseable {
   private final ExecutorService executor;
   private final int mappedPort;
   private final Discovery discovery;
-  @Nullable
-  private Gateway gateway;
+  @Nullable private Gateway gateway;
 
   private PortMapper(
       final ExecutorService executor, final int mappedPort, final Discovery discovery) {
@@ -52,9 +49,7 @@ public final class PortMapper implements AutoCloseable {
     return new PortMapper(executor, portToMap, discovery);
   }
 
-  /**
-   * Waits to find the gateway and pens the {@link PortMapper} port on it.
-   */
+  /** Waits to find the gateway and pens the {@link PortMapper} port on it. */
   public void openPort() {
     executor.execute(
         () -> {
@@ -77,9 +72,7 @@ public final class PortMapper implements AutoCloseable {
         });
   }
 
-  /**
-   * Closes the port on the router for the specified port number using the configured gateway.
-   */
+  /** Closes the port on the router for the specified port number using the configured gateway. */
   private void closePort() {
     if (null != gateway) {
       gateway.unmap(mappedPort, protocol);
@@ -91,9 +84,7 @@ public final class PortMapper implements AutoCloseable {
     this.gateway = gateway;
   }
 
-  /**
-   * Closes the {@link PortMapper}, and it's port on the router.
-   */
+  /** Closes the {@link PortMapper}, and it's port on the router. */
   @Override
   public void close() {
     closePort();

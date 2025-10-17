@@ -26,7 +26,7 @@ import org.gladiator.server.config.ServerConfigFactory;
 import org.gladiator.server.network.PortMapper;
 import org.gladiator.util.chat.ChatUtils;
 import org.gladiator.util.connection.Connection;
-import org.gladiator.util.connection.IoUtils;
+import org.gladiator.util.connection.SocketIo;
 import org.gladiator.util.connection.exchange.NameExchange;
 import org.gladiator.util.connection.message.ConnectionMessageFactory;
 import org.gladiator.util.connection.message.NonServerSideOnlyPredicate;
@@ -88,11 +88,16 @@ public final class Server implements AutoCloseable {
     final ChatUtils chatUtils = ChatUtils.create(">");
     try {
       final ServerConfig serverConfig = new ServerConfigFactory(chatUtils).create();
-      final ExecutorService executor = NamedVirtualThreadExecutorFactory.create("server");
       final ServerSocket serverSocket = createServerSocket(serverConfig.port(), chatUtils);
       final CryptographyManager keysManager = CryptographyManager.create();
 
-      server = new Server(keysManager, serverConfig, serverSocket, chatUtils, executor);
+      server =
+          new Server(
+              keysManager,
+              serverConfig,
+              serverSocket,
+              chatUtils,
+              NamedVirtualThreadExecutorFactory.create("server"));
     } catch (final UserInterruptException e) {
       LOGGER.debug(ChatUtils.USER_INTERRUPT_MESSAGE);
       throw new EndApplicationException(e);
@@ -158,14 +163,16 @@ public final class Server implements AutoCloseable {
       try {
         final Socket clientSocket = serverSocket.accept();
 
-        final SecretKey clientAesKey = exchangeCryptographyKeys(clientSocket);
+        final SocketIo socketIo = SocketIo.create(clientSocket);
+
+        final SecretKey clientAesKey = exchangeCryptographyKeys(socketIo);
+
         final String clientName =
-            new NameExchange(
-                    clientSocket, clientAesKey, cryptographyManager, serverConfig.name(), executor)
-                .exchange();
+            new NameExchange(clientAesKey, cryptographyManager, serverConfig.name(), executor)
+                .exchange(socketIo);
 
         final Connection clientConnection =
-            handleNewClientConnection(clientSocket, clientName, clientAesKey);
+            handleNewClientConnection(socketIo, clientName, clientAesKey);
 
         receiveMessages(clientConnection);
       } catch (final IOException e) {
@@ -184,17 +191,15 @@ public final class Server implements AutoCloseable {
    * Handles a new client connection by creating a {@link Connection} object, adding it to the list
    * of client connections, and broadcasting a {@link NewConnectionMessage} to other clients.
    *
-   * @param clientSocket The socket connected to the client.
+   * @param socketIo The SocketIo for the client connection.
    * @param clientName The name of the client.
    * @param clientAesKey The AES key for encrypting/decrypting messages with the client.
    * @return The Connection object representing the client's connection.
-   * @throws IOException If an I/O error occurs when creating the connection.
    */
   private Connection handleNewClientConnection(
-      final Socket clientSocket, final String clientName, final SecretKey clientAesKey)
-      throws IOException {
+      final SocketIo socketIo, final String clientName, final SecretKey clientAesKey) {
 
-    final Connection clientConnection = Connection.create(clientName, clientSocket, clientAesKey);
+    final Connection clientConnection = Connection.create(clientName, socketIo, clientAesKey);
 
     clientConnections.add(clientConnection);
     final Message newConnectionMessage = new NewConnectionMessage(clientName);
@@ -209,15 +214,15 @@ public final class Server implements AutoCloseable {
    * Exchanges cryptographic keys with the client. This involves sending the server's RSA public key
    * to the client and receiving the client's AES key.
    *
-   * @param clientSocket The socket connected to the client.
+   * @param socketIo The SocketIo for the client connection.
    * @return The AES key received from the client.
    * @throws FailedExchangeException If an error occurs during the key exchange process.
    */
-  private SecretKey exchangeCryptographyKeys(final Socket clientSocket)
+  private SecretKey exchangeCryptographyKeys(final SocketIo socketIo)
       throws FailedExchangeException {
 
-    sendRsaPublicKey(clientSocket);
-    return receiveAesKey(clientSocket);
+    sendRsaPublicKey(socketIo.getObjectWriter());
+    return receiveAesKey(socketIo.getReader());
   }
 
   /**
@@ -226,14 +231,13 @@ public final class Server implements AutoCloseable {
    * <p>Note: The public key is sent as bytes instead of an object because native images do not
    * support the deserialization of PublicKey objects due to the absence of a suitable constructor.
    *
-   * @param socket the socket connected to the client
+   * @param objectWriter the ObjectOutput to send the RSA public key
    * @throws FailedExchangeException if an error occurs while sending the RSA public key
    */
-  private void sendRsaPublicKey(final Socket socket) throws FailedExchangeException {
+  private void sendRsaPublicKey(final ObjectOutput objectWriter) throws FailedExchangeException {
     try {
-      final ObjectOutput writer = IoUtils.createObjectWriter(socket);
       final Key ownPublicKey = cryptographyManager.getRsaPublicKey();
-      writer.writeObject(ownPublicKey.getEncoded());
+      objectWriter.writeObject(ownPublicKey.getEncoded());
       final String logMessage = "Sent RSA public key";
       LOGGER.debug(logMessage);
     } catch (final IOException e) {
@@ -245,14 +249,13 @@ public final class Server implements AutoCloseable {
   /**
    * Receives the AES key from the client.
    *
-   * @param socket the socket connected to the client
+   * @param reader the BufferedReader to read the AES key
    * @return the AES key received from the client
    * @throws UncheckedIOException if an error occurs while receiving the AES key
    */
-  private SecretKey receiveAesKey(final Socket socket) {
+  private SecretKey receiveAesKey(final BufferedReader reader) {
     try {
-      final BufferedReader objectReader = IoUtils.createReader(socket);
-      final String encryptedAesKeyString = objectReader.readLine();
+      final String encryptedAesKeyString = reader.readLine();
       final SecretKey aesKey = cryptographyManager.decryptRsa(encryptedAesKeyString);
       final String logMessage = "Received AES key";
       LOGGER.debug(logMessage);

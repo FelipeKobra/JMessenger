@@ -8,7 +8,5 @@ public final class UserInputConfig {
 
   public static final int USER_NAME_MAX_LENGTH = 40;
 
-  private UserInputConfig() {
-  }
-
+  private UserInputConfig() {}
 }

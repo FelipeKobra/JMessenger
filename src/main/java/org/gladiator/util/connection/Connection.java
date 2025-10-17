@@ -1,12 +1,8 @@
 package org.gladiator.util.connection;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.UncheckedIOException;
-import java.net.Socket;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Stream;
 import javax.crypto.SecretKey;
 import org.apache.commons.lang3.Validate;
@@ -32,48 +28,35 @@ public final class Connection implements AutoCloseable {
    */
   private final String name;
 
-  private final BufferedReader reader;
-  private final PrintWriter writer;
-  private final Socket socket;
+  private final SocketIo socketIo;
   private final SecretKey aesKey;
 
   /**
    * Constructs a new Connection.
    *
    * @param name The name of the client.
-   * @param socket The socket for the connection.
-   * @param reader The BufferedReader for reading input.
-   * @param writer The PrintWriter for writing output.
+   * @param socketIo The SocketIo for the connection.
    * @throws NullPointerException if any of the parameters are null.
    * @throws IllegalArgumentException if the name is blank.
    */
-  private Connection(
-      final String name,
-      final BufferedReader reader,
-      final PrintWriter writer,
-      final Socket socket,
-      final SecretKey aesKey) {
+  private Connection(final String name, final SocketIo socketIo, final SecretKey aesKey) {
     Validate.notBlank(name);
+    this.socketIo = socketIo;
     this.aesKey = aesKey;
     this.name = name;
-    this.reader = reader;
-    this.writer = Objects.requireNonNull(writer, "writer parameter on Connection must not be null");
-    this.socket = Objects.requireNonNull(socket, "socket parameter on Connection must not be null");
   }
 
   /**
    * Creates a new Connection instance.
    *
    * @param name The name of the client.
-   * @param socket The socket for the connection.
+   * @param socketIo The SocketIo for the connection.
    * @param aesKey The AES secret key for encryption and decryption.
    * @return A new Connection instance.
-   * @throws IOException If an I/O error occurs when creating the reader or writer.
    */
-  public static Connection create(final String name, final Socket socket, final SecretKey aesKey)
-      throws IOException {
-    return new Connection(
-        name, IoUtils.createReader(socket), IoUtils.createWriter(socket), socket, aesKey);
+  public static Connection create(
+      final String name, final SocketIo socketIo, final SecretKey aesKey) {
+    return new Connection(name, socketIo, aesKey);
   }
 
   /**
@@ -103,7 +86,7 @@ public final class Connection implements AutoCloseable {
    */
   public Stream<String> readStream(final CryptographyManager cryptographyManager)
       throws UncheckedIOException {
-    return reader.lines().map(msg -> cryptographyManager.decrypt(aesKey, msg));
+    return socketIo.getReader().lines().map(msg -> cryptographyManager.decrypt(aesKey, msg));
   }
 
   /**
@@ -114,7 +97,7 @@ public final class Connection implements AutoCloseable {
   public void writeOutput(final Message message, final CryptographyManager cryptographyManager) {
     final String encryptedMessage =
         cryptographyManager.encrypt(aesKey, message.toTransportString());
-    writer.println(encryptedMessage);
+    socketIo.getWriter().println(encryptedMessage);
   }
 
   /**
@@ -125,9 +108,7 @@ public final class Connection implements AutoCloseable {
   @Override
   public void close() {
     try {
-      writer.close();
-      reader.close();
-      socket.close();
+      socketIo.close();
     } catch (final IOException e) {
       LOGGER.error("Error closing the connection: {}", e, e);
     }

@@ -13,9 +13,7 @@ import org.jline.terminal.TerminalBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Utility class for handling chat-related operations.
- */
+/** Utility class for handling chat-related operations. */
 public final class ChatUtils implements AutoCloseable {
 
   public static final String USER_INTERRUPT_MESSAGE =
@@ -115,7 +113,7 @@ public final class ChatUtils implements AutoCloseable {
   /**
    * Asks the user for an option with a default value.
    *
-   * @param optionName    The name of the option.
+   * @param optionName The name of the option.
    * @param defaultOption The default value for the option.
    * @return The user input.
    */
@@ -133,8 +131,8 @@ public final class ChatUtils implements AutoCloseable {
    * Asks the user for an option with a default value and a maximum option length. Note that the
    * maximum length is only displayed in the prompt and is not enforced programmatically.
    *
-   * @param optionName      The name of the option.
-   * @param defaultOption   The default value for the option.
+   * @param optionName The name of the option.
+   * @param defaultOption The default value for the option.
    * @param maxOptionLength The maximum length of the option.
    * @return The user input.
    */
@@ -160,12 +158,12 @@ public final class ChatUtils implements AutoCloseable {
   /**
    * Prompts the user for a binary (yes/no) option.
    *
-   * <p>This method was created to get "yes or no" options from the user. It shows the
-   * provided prompt along with a default-choice hint ("Y/n" when {@code defaultOption} is
-   * {@code true}, or "y/N" when {@code false}). The user's input is read, converted to upper case
-   * using {@link Locale#ROOT}, and considered affirmative only if it equals {@code "Y"}.
+   * <p>This method was created to get "yes or no" options from the user. It shows the provided
+   * prompt along with a default-choice hint ("Y/n" when {@code defaultOption} is {@code true}, or
+   * "y/N" when {@code false}). The user's input is read, converted to upper case using {@link
+   * Locale#ROOT}, and considered affirmative only if it equals {@code "Y"}.
    *
-   * @param optionPrompt  the prompt message shown to the user
+   * @param optionPrompt the prompt message shown to the user
    * @param defaultOption the default boolean choice; {@code true} means default is "Y"
    * @return {@code true} if the user answered 'Y' (case-insensitive), {@code false} otherwise
    */
@@ -197,9 +195,7 @@ public final class ChatUtils implements AutoCloseable {
     displayOnScreen(division + System.lineSeparator());
   }
 
-  /**
-   * Displays the buffered user prompt on the screen.
-   */
+  /** Displays the buffered user prompt on the screen. */
   private void showBufferedUserPrompt() {
     print(userPrompt + " " + lineReader.getBuffer().toString());
   }

@@ -4,13 +4,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
-import java.net.Socket;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import javax.crypto.SecretKey;
 import org.gladiator.exception.FailedExchangeException;
-import org.gladiator.util.connection.IoUtils;
+import org.gladiator.util.connection.SocketIo;
 import org.gladiator.util.crypto.CryptographyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +19,6 @@ public class NameExchange {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(NameExchange.class);
 
-  private final Socket socket;
   private final SecretKey aesKey;
   private final CryptographyManager cryptographyManager;
   private final String ownName;
@@ -29,20 +27,16 @@ public class NameExchange {
   /**
    * Constructs a NameExchange with the specified parameters.
    *
-   * @param socket The socket for the exchange.
    * @param aesKey The AES secret key for encryption/decryption.
    * @param cryptographyManager The manager for cryptographic operations.
    * @param ownName The name to be sent to the other endpoint.
    * @param executor The executor service for asynchronous operations.
    */
   public NameExchange(
-      final Socket socket,
       final SecretKey aesKey,
       final CryptographyManager cryptographyManager,
       final String ownName,
       final ExecutorService executor) {
-    this.socket =
-        Objects.requireNonNull(socket, "The socket of the name exchange must not be null");
     this.aesKey = aesKey;
     this.cryptographyManager = cryptographyManager;
     this.ownName = ownName;
@@ -52,24 +46,23 @@ public class NameExchange {
   /**
    * Performs the name exchange operation.
    *
+   * @param socketIo The SocketIo for communication.
    * @return The name received from the other endpoint.
    * @throws FailedExchangeException If an error occurs during the exchange.
    */
-  public String exchange() throws FailedExchangeException {
+  public String exchange(final SocketIo socketIo) throws FailedExchangeException {
     try {
-      final PrintWriter writer = IoUtils.createWriter(socket);
-      final BufferedReader reader = IoUtils.createReader(socket);
 
       final CompletableFuture<Void> sendOwnNameFuture =
-          CompletableFuture.runAsync(() -> sendName(writer), executor);
+          CompletableFuture.runAsync(() -> sendName(socketIo.getWriter()), executor);
 
       final CompletableFuture<String> receiveNameFuture =
-          CompletableFuture.supplyAsync(() -> receiveName(reader), executor);
+          CompletableFuture.supplyAsync(() -> receiveName(socketIo.getReader()), executor);
 
       CompletableFuture.allOf(sendOwnNameFuture, receiveNameFuture).join();
       return receiveNameFuture.join();
 
-    } catch (final IOException | UncheckedIOException e) {
+    } catch (final UncheckedIOException e) {
       throw new FailedExchangeException(e);
     }
   }

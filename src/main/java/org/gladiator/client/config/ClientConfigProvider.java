@@ -5,9 +5,7 @@ import static org.gladiator.environment.UserInputConfig.USER_NAME_MAX_LENGTH;
 import org.gladiator.environment.Port;
 import org.gladiator.util.chat.ChatUtils;
 
-/**
- * Provides configuration for the client by interacting with the user to receive input.
- */
+/** Provides configuration for the client by interacting with the user to receive input. */
 public final class ClientConfigProvider {
 
   private final ChatUtils chatUtils;

@@ -26,7 +26,7 @@ import org.gladiator.exception.FailedExchangeException;
 import org.gladiator.exception.InvalidMessageException;
 import org.gladiator.util.chat.ChatUtils;
 import org.gladiator.util.connection.Connection;
-import org.gladiator.util.connection.IoUtils;
+import org.gladiator.util.connection.SocketIo;
 import org.gladiator.util.connection.exchange.NameExchange;
 import org.gladiator.util.connection.message.ConnectionMessageFactory;
 import org.gladiator.util.connection.message.model.Message;
@@ -75,10 +75,14 @@ public final class Client implements AutoCloseable {
     try {
       final ClientConfig clientConfig = new ClientConfigProvider(chatUtils).createClientConfig();
 
-      final ExecutorService executor = NamedVirtualThreadExecutorFactory.create("client");
       final CryptographyManager cryptographyManager = CryptographyManager.create();
 
-      client = new Client(clientConfig, executor, chatUtils, cryptographyManager);
+      client =
+          new Client(
+              clientConfig,
+              NamedVirtualThreadExecutorFactory.create("client"),
+              chatUtils,
+              cryptographyManager);
     } catch (final UserInterruptException | EndOfFileException e) {
       throw new EndApplicationException(e);
     }
@@ -175,11 +179,16 @@ public final class Client implements AutoCloseable {
    */
   private Connection establishConnection(final Socket socket)
       throws FailedExchangeException, IOException {
-    final SecretKey ownAesKey = exchangeCryptographyKeys(socket);
+
+    final SocketIo socketIo = SocketIo.create(socket);
+
+    final SecretKey ownAesKey = exchangeCryptographyKeys(socketIo);
+
     final String serverName =
-        new NameExchange(socket, ownAesKey, cryptographyManager, config.name(), executor)
-            .exchange();
-    return handleNewConnection(socket, serverName, ownAesKey);
+        new NameExchange(ownAesKey, cryptographyManager, config.name(), executor)
+            .exchange(socketIo);
+
+    return handleNewConnection(socketIo, serverName, ownAesKey);
   }
 
   /**
@@ -200,33 +209,30 @@ public final class Client implements AutoCloseable {
    * Creates and handles a new connection to the server by displaying connection messages and
    * creating a {@link Connection} object.
    *
-   * @param serverSocket The socket connected to the server.
+   * @param socketIo The socketIO conected to the server.
    * @param serverName The name of the server.
    * @param ownAesKey The AES key used for encryption.
    * @return The {@link Connection} object representing the server connection.
-   * @throws IOException If an I/O error occurs during the connection process.
    */
   private Connection handleNewConnection(
-      final Socket serverSocket, final String serverName, final SecretKey ownAesKey)
-      throws IOException {
+      final SocketIo socketIo, final String serverName, final SecretKey ownAesKey) {
     chatUtils.displayBanner("Connection Established with " + serverName);
     chatUtils.displayOnScreen("Type `quit` to exit");
-    return Connection.create(serverName, serverSocket, ownAesKey);
+    return Connection.create(serverName, socketIo, ownAesKey);
   }
 
   /**
    * Exchanges cryptographic keys with the server. This involves receiving the server's RSA public
    * key and sending the client's AES key encrypted with the server's RSA public key.
    *
-   * @param socket The socket connected to the server.
+   * @param socketIo The socket connected to the server.
    * @return The AES key used for encryption.
    * @throws FailedExchangeException If an error occurs during the key exchange process.
-   * @throws IOException If an I/O error occurs during the key exchange process.
    */
-  private SecretKey exchangeCryptographyKeys(final Socket socket)
-      throws FailedExchangeException, IOException {
-    final PublicKey serverPublicKey = receiveRsaPublicKey(socket);
-    sendOwnEncryptedAesKey(serverPublicKey, socket);
+  private SecretKey exchangeCryptographyKeys(final SocketIo socketIo)
+      throws FailedExchangeException {
+    final PublicKey serverPublicKey = receiveRsaPublicKey(socketIo.getObjectReader());
+    sendOwnEncryptedAesKey(serverPublicKey, socketIo.getWriter());
     return cryptographyManager.getAesKey();
   }
 
@@ -236,17 +242,15 @@ public final class Client implements AutoCloseable {
    * <p>Note: The X509 encoded key specification is used because native images do not support the
    * serialization of PublicKey objects.
    *
-   * @param socket the socket connected to the server
+   * @param objectReader the ObjectInput stream to read the RSA public key from
    * @return the received RSA public key
-   * @throws IOException if an I/O error occurs
    * @throws FailedExchangeException if the key exchange fails
    */
-  private PublicKey receiveRsaPublicKey(final Socket socket)
-      throws IOException, FailedExchangeException {
-    final ObjectInput reader = IoUtils.createObjectReader(socket);
+  private PublicKey receiveRsaPublicKey(final ObjectInput objectReader)
+      throws FailedExchangeException {
     final PublicKey otherEndPublicKey;
     try {
-      final byte[] publicKeyBytes = (byte[]) reader.readObject();
+      final byte[] publicKeyBytes = (byte[]) objectReader.readObject();
       final KeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
       final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
       otherEndPublicKey = keyFactory.generatePublic(publicKeySpec);
@@ -272,21 +276,16 @@ public final class Client implements AutoCloseable {
    * Sends the client's AES key encrypted with the server's RSA public key.
    *
    * @param otherEndPublicKey the server's RSA public key
-   * @param socket the socket connected to the server
+   * @param printWriter the socket connected to the server
    * @throws UncheckedIOException if an I/O error occurs while sending the AES key
    */
-  private void sendOwnEncryptedAesKey(final PublicKey otherEndPublicKey, final Socket socket) {
-    try {
-      final PrintWriter writer = IoUtils.createWriter(socket);
-      final SecretKey aesKey = cryptographyManager.getAesKey();
-      final String encryptedAesKey = cryptographyManager.encryptRsa(otherEndPublicKey, aesKey);
-      writer.println(encryptedAesKey);
-      final String logMessage = "AES key sent";
-      LOGGER.debug(logMessage);
-    } catch (final IOException e) {
-      LOGGER.error("Error sending AES key");
-      throw new UncheckedIOException(e);
-    }
+  private void sendOwnEncryptedAesKey(
+      final PublicKey otherEndPublicKey, final PrintWriter printWriter) {
+    final SecretKey aesKey = cryptographyManager.getAesKey();
+    final String encryptedAesKey = cryptographyManager.encryptRsa(otherEndPublicKey, aesKey);
+    printWriter.println(encryptedAesKey);
+    final String logMessage = "AES key sent";
+    LOGGER.debug(logMessage);
   }
 
   /**

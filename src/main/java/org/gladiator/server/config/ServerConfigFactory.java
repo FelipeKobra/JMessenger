@@ -8,9 +8,7 @@ import org.gladiator.util.chat.ChatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Factory class for creating {@link ServerConfig} instances.
- */
+/** Factory class for creating {@link ServerConfig} instances. */
 public class ServerConfigFactory {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ServerConfigFactory.class);
