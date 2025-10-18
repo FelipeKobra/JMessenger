@@ -2,7 +2,6 @@ package org.gladiator.client;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.net.ConnectException;
 import java.net.Socket;
@@ -231,7 +230,7 @@ public final class Client implements AutoCloseable {
   private SecretKey exchangeCryptographyKeys(final SocketIo socketIo)
       throws FailedExchangeException {
     final PublicKey serverPublicKey = receiveRsaPublicKey(socketIo.getObjectReader());
-    sendOwnEncryptedAesKey(serverPublicKey, socketIo.getWriter());
+    sendOwnEncryptedAesKey(serverPublicKey, socketIo);
     return cryptographyManager.getAesKey();
   }
 
@@ -275,14 +274,13 @@ public final class Client implements AutoCloseable {
    * Sends the client's AES key encrypted with the server's RSA public key.
    *
    * @param otherEndPublicKey the server's RSA public key
-   * @param printWriter the socket connected to the server
+   * @param socketIo the SocketIo to send the encrypted AES key through
    * @throws UncheckedIOException if an I/O error occurs while sending the AES key
    */
-  private void sendOwnEncryptedAesKey(
-      final PublicKey otherEndPublicKey, final PrintWriter printWriter) {
+  private void sendOwnEncryptedAesKey(final PublicKey otherEndPublicKey, final SocketIo socketIo) {
     final SecretKey aesKey = cryptographyManager.getAesKey();
     final String encryptedAesKey = cryptographyManager.encryptRsa(otherEndPublicKey, aesKey);
-    printWriter.println(encryptedAesKey);
+    socketIo.println(encryptedAesKey);
     final String logMessage = "AES key sent";
     LOGGER.debug(logMessage);
   }

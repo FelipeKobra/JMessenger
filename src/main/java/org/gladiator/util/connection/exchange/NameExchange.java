@@ -2,7 +2,6 @@ package org.gladiator.util.connection.exchange;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -54,7 +53,7 @@ public class NameExchange {
     try {
 
       final CompletableFuture<Void> sendOwnNameFuture =
-          CompletableFuture.runAsync(() -> sendName(socketIo.getWriter()), executor);
+          CompletableFuture.runAsync(() -> sendName(socketIo), executor);
 
       final CompletableFuture<String> receiveNameFuture =
           CompletableFuture.supplyAsync(() -> receiveName(socketIo.getReader()), executor);
@@ -70,11 +69,11 @@ public class NameExchange {
   /**
    * Sends the own name to the other endpoint.
    *
-   * @param writer The PrintWriter to send the name.
+   * @param socketIo The SocketIo for communication.
    */
-  private void sendName(final PrintWriter writer) {
+  private void sendName(final SocketIo socketIo) {
     final String encryptedOwnName = cryptographyManager.encrypt(aesKey, ownName);
-    writer.println(encryptedOwnName);
+    socketIo.println(encryptedOwnName);
     final String logMessage = "Sent name " + ownName;
     LOGGER.debug(logMessage);
   }

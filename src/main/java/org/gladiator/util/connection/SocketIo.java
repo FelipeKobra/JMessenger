@@ -70,12 +70,32 @@ public final class SocketIo implements AutoCloseable {
     return reader;
   }
 
-  public PrintWriter getWriter() {
-    return writer;
+  /**
+   * Writes the provided message to the socket's character output stream followed by a newline, and
+   * relies on the writer's auto-flush setting to flush the data.
+   *
+   * <p>This is a convenience wrapper around the underlying {@link PrintWriter} to send a single
+   * textual line to the remote peer using the UTF-8 encoding configured on creation.
+   *
+   * @param message the text line to send; may be {@code null} (will result in the string "null")
+   */
+  public void println(final String message) {
+    writer.println(message);
   }
 
-  public ObjectOutputStream getObjectWriter() {
-    return objectWriter;
+  /**
+   * Serializes and writes the provided object to the socket's {@link ObjectOutputStream}.
+   *
+   * <p>The object is written using the underlying object output stream created for the socket. This
+   * method will throw an {@link IOException} if an I/O error occurs during serialization or when
+   * writing to the socket. Note that writing may block and callers are responsible for ensuring the
+   * remote peer is ready to receive object stream data.
+   *
+   * @param object the object to serialize and send; may be {@code null}
+   * @throws IOException if an I/O error occurs while writing the object
+   */
+  public void writeObject(final Object object) throws IOException {
+    objectWriter.writeObject(object);
   }
 
   public ObjectInput getObjectReader() {

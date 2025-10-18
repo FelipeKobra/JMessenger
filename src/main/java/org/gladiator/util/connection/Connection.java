@@ -97,7 +97,7 @@ public final class Connection implements AutoCloseable {
   public void writeOutput(final Message message, final CryptographyManager cryptographyManager) {
     final String encryptedMessage =
         cryptographyManager.encrypt(aesKey, message.toTransportString());
-    socketIo.getWriter().println(encryptedMessage);
+    socketIo.println(encryptedMessage);
   }
 
   /**

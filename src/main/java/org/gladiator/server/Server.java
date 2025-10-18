@@ -2,7 +2,6 @@ package org.gladiator.server;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.ObjectOutput;
 import java.io.UncheckedIOException;
 import java.net.BindException;
 import java.net.ServerSocket;
@@ -224,7 +223,7 @@ public final class Server implements AutoCloseable {
   private SecretKey exchangeCryptographyKeys(final SocketIo socketIo)
       throws FailedExchangeException {
 
-    sendRsaPublicKey(socketIo.getObjectWriter());
+    sendRsaPublicKey(socketIo);
     return receiveAesKey(socketIo.getReader());
   }
 
@@ -234,13 +233,13 @@ public final class Server implements AutoCloseable {
    * <p>Note: The public key is sent as bytes instead of an object because native images do not
    * support the deserialization of PublicKey objects due to the absence of a suitable constructor.
    *
-   * @param objectWriter the ObjectOutput to send the RSA public key
+   * @param socketIo The SocketIo for the client connection.
    * @throws FailedExchangeException if an error occurs while sending the RSA public key
    */
-  private void sendRsaPublicKey(final ObjectOutput objectWriter) throws FailedExchangeException {
+  private void sendRsaPublicKey(final SocketIo socketIo) throws FailedExchangeException {
     try {
       final Key ownPublicKey = cryptographyManager.getRsaPublicKey();
-      objectWriter.writeObject(ownPublicKey.getEncoded());
+      socketIo.writeObject(ownPublicKey.getEncoded());
       final String logMessage = "Sent RSA public key";
       LOGGER.debug(logMessage);
     } catch (final IOException e) {
