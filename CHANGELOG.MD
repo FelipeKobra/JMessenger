@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.14.0](https://github.com/FelipeKobra/JMessenger/compare/v0.14.0...master) (2025-10-18)
+
+
+### Features
+
+-  close all sockets besides the socketIO ([d9ce63f730c9810](https://github.com/FelipeKobra/JMessenger/commit/d9ce63f730c9810))
+-  add a central class for handling the sockets IO ([d0bb360c295a4c4](https://github.com/FelipeKobra/JMessenger/commit/d0bb360c295a4c4))
+-  add option to disable UPnP on Server and more generic dialog options ([6a7959110e45094](https://github.com/FelipeKobra/JMessenger/commit/6a7959110e45094))
+-  add jakarta annotations on classes ([21262d9ff77c169](https://github.com/FelipeKobra/JMessenger/commit/21262d9ff77c169))
+
+### Bug Fixes
+
+-  fix EXPOSURE spotbugs bug on SocketIo ([19f2df98d63ec07](https://github.com/FelipeKobra/JMessenger/commit/19f2df98d63ec07))
+
 ## [v0.10.3](https://github.com/FelipeKobra/JMessenger/compare/v0.10.3...master) (2025-02-24)
 
 ### Breaking changes
