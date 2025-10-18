@@ -1,15 +1,11 @@
 package org.gladiator.client.config;
 
-import static org.gladiator.util.validation.InputValidator.USER_NAME_MAX_LENGTH;
+import static org.gladiator.environment.UserInputConfig.USER_NAME_MAX_LENGTH;
 
 import org.gladiator.environment.Port;
-import org.gladiator.exception.EndApplicationException;
 import org.gladiator.util.chat.ChatUtils;
-import org.gladiator.util.validation.InputValidator;
 
-/**
- * Provides configuration for the client by interacting with the user to receive input.
- */
+/** Provides configuration for the client by interacting with the user to receive input. */
 public final class ClientConfigProvider {
 
   private final ChatUtils chatUtils;
@@ -27,9 +23,8 @@ public final class ClientConfigProvider {
    * Creates a new ClientConfig by interacting with the user to receive the necessary input.
    *
    * @return a new ClientConfig instance with the user's input
-   * @throws EndApplicationException if the user input is invalid
    */
-  public ClientConfig createClientConfig() throws EndApplicationException {
+  public ClientConfig createClientConfig() {
 
     final String clientName = receiveName();
     final String serverAddress = receiveAddress();
@@ -42,19 +37,9 @@ public final class ClientConfigProvider {
    * Receives the client's name from the user.
    *
    * @return the client's name
-   * @throws EndApplicationException if the username is not valid
    */
-  private String receiveName() throws EndApplicationException {
-    String name;
-    name = chatUtils.getUserInput(
-        "Choose your name [max size: " + USER_NAME_MAX_LENGTH + "]: ");
-    name = name.trim();
-
-    if (InputValidator.isUserNameNotValid(name)) {
-      chatUtils.displayOnScreen("The username is not valid");
-      throw new EndApplicationException("User name not valid");
-    }
-    return name;
+  private String receiveName() {
+    return chatUtils.askUserOption("User Name", "Guest", USER_NAME_MAX_LENGTH);
   }
 
   /**
@@ -86,8 +71,8 @@ public final class ClientConfigProvider {
     boolean isPortValid = false;
 
     while (!isPortValid) {
-      final String serverPortString = chatUtils.askUserOption("server port",
-          String.valueOf(Port.PORT_DEFAULT));
+      final String serverPortString =
+          chatUtils.askUserOption("server port", String.valueOf(Port.PORT_DEFAULT));
       if (serverPortString.isBlank()) {
         serverPort = Port.PORT_DEFAULT;
       } else {
@@ -116,7 +101,10 @@ public final class ClientConfigProvider {
     }
 
     chatUtils.displayOnScreen(
-        "Insert a number within the valid port range (" + Port.PORT_MIN + " - " + Port.PORT_MAX
+        "Insert a number within the valid port range ("
+            + Port.PORT_MIN
+            + " - "
+            + Port.PORT_MAX
             + ")");
 
     return false;

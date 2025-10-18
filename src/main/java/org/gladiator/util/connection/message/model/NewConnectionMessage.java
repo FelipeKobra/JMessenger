@@ -1,5 +1,6 @@
 package org.gladiator.util.connection.message.model;
 
+import jakarta.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.gladiator.util.connection.message.ConnectionMessageType;
@@ -16,7 +17,7 @@ public record NewConnectionMessage(String newConnectionUserName) implements Mess
    * Constructs a new ConnectionMessage.
    *
    * @param newConnectionUserName The name of the sender.
-   * @throws NullPointerException     if any of the parameters are null.
+   * @throws NullPointerException if any of the parameters are null.
    * @throws IllegalArgumentException if the senderName is blank.
    */
   public NewConnectionMessage {
@@ -28,9 +29,9 @@ public record NewConnectionMessage(String newConnectionUserName) implements Mess
    *
    * @param message The transport string.
    * @return The created NewConnectionMessage.
-   * @throws NullPointerException     if the message is null.
+   * @throws NullPointerException if the message is null.
    * @throws IllegalArgumentException if the message is blank or does not match the expected
-   *                                  pattern.
+   *     pattern.
    */
   public static Message fromTransportString(final String message) {
     Validate.notBlank(message);
@@ -62,6 +63,7 @@ public record NewConnectionMessage(String newConnectionUserName) implements Mess
    * @return The string representation of the message.
    */
   @Override
+  @Nonnull
   public String toString() {
     return "User " + newConnectionUserName + " Connected";
   }

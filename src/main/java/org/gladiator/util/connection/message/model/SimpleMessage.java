@@ -1,5 +1,6 @@
 package org.gladiator.util.connection.message.model;
 
+import jakarta.annotation.Nonnull;
 import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -17,8 +18,8 @@ public record SimpleMessage(String senderName, String message) implements Messag
    * Constructs a new ConnectionMessage.
    *
    * @param senderName The name of the sender.
-   * @param message    The message of the message.
-   * @throws NullPointerException     if any of the parameters are null.
+   * @param message The message of the message.
+   * @throws NullPointerException if any of the parameters are null.
    * @throws IllegalArgumentException if the senderName is blank.
    */
   public SimpleMessage {
@@ -31,9 +32,9 @@ public record SimpleMessage(String senderName, String message) implements Messag
    *
    * @param message The transport string.
    * @return The created SimpleMessage.
-   * @throws NullPointerException     if the message is null.
+   * @throws NullPointerException if the message is null.
    * @throws IllegalArgumentException if the message is blank or does not match the expected
-   *                                  pattern.
+   *     pattern.
    */
   public static Message fromTransportString(final String message) {
     Validate.notBlank(message);
@@ -67,6 +68,7 @@ public record SimpleMessage(String senderName, String message) implements Messag
    * @return The string representation of the message.
    */
   @Override
+  @Nonnull
   public String toString() {
     return senderName + ": " + message;
   }

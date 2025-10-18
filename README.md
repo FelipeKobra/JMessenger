@@ -35,8 +35,8 @@ to install Java 21 on different operating systems:
     + Download the Java 21 installer from the official Oracle website.
     + Run the installer and follow the installation instructions.
 * Linux:
-    + Open a terminal and run the command sudo apt-get install openjdk-21-jdk (for Ubuntu-based
-      systems) or sudo yum install java-21-openjdk (for RPM-based systems).
+    + Open a terminal and run the command `sudo apt-get install openjdk-21-jdk` (for Ubuntu-based
+      systems) or `sudo yum install java-21-openjdk` (for RPM-based systems).
     + Follow the installation instructions.
 
 ### Usage

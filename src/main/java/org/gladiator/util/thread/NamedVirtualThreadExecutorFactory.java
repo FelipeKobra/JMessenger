@@ -4,13 +4,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
-/**
- * Factory that creates virtual thread executors with custom prefix names.
- */
+/** Factory that creates virtual thread executors with custom prefix names. */
 public final class NamedVirtualThreadExecutorFactory {
 
-  private NamedVirtualThreadExecutorFactory() {
-  }
+  private NamedVirtualThreadExecutorFactory() {}
 
   /**
    * Creates virtual thread executors with custom names.
@@ -22,5 +19,4 @@ public final class NamedVirtualThreadExecutorFactory {
     final ThreadFactory factory = Thread.ofVirtual().name(threadPrefix + "-", 0).factory();
     return Executors.newThreadPerTaskExecutor(factory);
   }
-
 }

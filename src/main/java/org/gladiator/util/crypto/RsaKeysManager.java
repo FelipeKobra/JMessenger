@@ -21,9 +21,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Manages RSA key generation, encryption, and decryption operations.
  *
- * <p>The RSA algorithm is used to securely encrypt the AES key, and Base64 encoding is necessary
- * to ensure the encrypted message is not altered during the socket connection.
- * </p>
+ * <p>The RSA algorithm is used to securely encrypt the AES key, and Base64 encoding is necessary to
+ * ensure the encrypted message is not altered during the socket connection.
  */
 public final class RsaKeysManager {
 
@@ -55,8 +54,7 @@ public final class RsaKeysManager {
       final KeyPair kp = kpg.generateKeyPair();
       return new RsaKeysManager(kp.getPrivate(), kp.getPublic());
     } catch (final NoSuchAlgorithmException e) {
-      throw new EndApplicationException(
-          "The RSA algorithm: " + ALGORITHM + "is not valid.", e);
+      throw new EndApplicationException("The RSA algorithm: " + ALGORITHM + "is not valid.", e);
     }
   }
 
@@ -78,10 +76,9 @@ public final class RsaKeysManager {
    *
    * <p>The AES key is first encoded using Base64 to ensure it is not altered during the socket
    * connection. The RSA algorithm is then used to encrypt the AES key.
-   * </p>
    *
    * @param publicKey The RSA public key.
-   * @param key       The AES secret key.
+   * @param key The AES secret key.
    * @return The encrypted AES key as a Base64 encoded string.
    */
   public String encrypt(final PublicKey publicKey, final Key key) {
@@ -91,9 +88,14 @@ public final class RsaKeysManager {
       cipher.init(Cipher.ENCRYPT_MODE, publicKey);
       final byte[] encryptedKeyBytes = cipher.doFinal(keyBytes);
       return Base64.getEncoder().encodeToString(encryptedKeyBytes);
-    } catch (final NoSuchPaddingException | InvalidKeyException | NoSuchAlgorithmException
-                   | IllegalBlockSizeException | BadPaddingException e) {
-      return handleException("Error during a RSA encrypt with key: (" + key + ")", e,
+    } catch (final NoSuchPaddingException
+        | InvalidKeyException
+        | NoSuchAlgorithmException
+        | IllegalBlockSizeException
+        | BadPaddingException e) {
+      return handleException(
+          "Error during a RSA encrypt with key: (" + key + ")",
+          e,
           Base64.getEncoder().encodeToString(keyBytes));
     }
   }
@@ -103,7 +105,6 @@ public final class RsaKeysManager {
    *
    * <p>The encrypted AES key is first decoded from Base64. The RSA algorithm is then used to
    * decrypt the AES key, which can be used to encrypt and decrypt messages.
-   * </p>
    *
    * @param keyAsString The AES key as a Base64 encoded string.
    * @return The decrypted AES secret key.
@@ -116,15 +117,18 @@ public final class RsaKeysManager {
       cipher.init(Cipher.DECRYPT_MODE, privateKey);
       final byte[] decryptedKeyBytes = cipher.doFinal(decodedKeyBytes);
       return new SecretKeySpec(decryptedKeyBytes, "AES");
-    } catch (final NoSuchPaddingException | InvalidKeyException | NoSuchAlgorithmException
-                   | IllegalBlockSizeException | BadPaddingException e) {
-      return handleException("Error during a RSA decryption with key: (" + keyAsString + ")", e,
-          encryptedKey);
+    } catch (final NoSuchPaddingException
+        | InvalidKeyException
+        | NoSuchAlgorithmException
+        | IllegalBlockSizeException
+        | BadPaddingException e) {
+      return handleException(
+          "Error during a RSA decryption with key: (" + keyAsString + ")", e, encryptedKey);
     }
   }
 
-  private <T> T handleException(final String errorWarning, final Throwable ex,
-      final T returnMessage) {
+  private <T> T handleException(
+      final String errorWarning, final Throwable ex, final T returnMessage) {
     LOGGER.error(errorWarning, ex);
     return returnMessage;
   }

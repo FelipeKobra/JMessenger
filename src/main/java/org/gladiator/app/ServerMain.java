@@ -1,20 +1,16 @@
 package org.gladiator.app;
 
-
 import org.gladiator.exception.EndApplicationException;
 import org.gladiator.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Main class for starting the server application.
- */
+/** Main class for starting the server application. */
 public final class ServerMain {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ServerMain.class);
 
-  private ServerMain() {
-  }
+  private ServerMain() {}
 
   /**
    * The main method to start the server.

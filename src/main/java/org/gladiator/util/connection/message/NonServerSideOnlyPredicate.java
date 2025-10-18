@@ -3,9 +3,7 @@ package org.gladiator.util.connection.message;
 import java.util.function.Predicate;
 import org.gladiator.util.connection.message.model.Message;
 
-/**
- * Predicate implementation that tests if a message is not server-side only.
- */
+/** Predicate implementation that tests if a message is not server-side only. */
 public class NonServerSideOnlyPredicate implements Predicate<Message> {
 
   /**

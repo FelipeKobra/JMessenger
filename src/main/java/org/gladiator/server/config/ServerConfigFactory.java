@@ -1,18 +1,14 @@
 package org.gladiator.server.config;
 
-import static org.gladiator.util.validation.InputValidator.USER_NAME_MAX_LENGTH;
+import static org.gladiator.environment.UserInputConfig.USER_NAME_MAX_LENGTH;
 
-import java.util.Locale;
 import org.apache.commons.lang3.Validate;
 import org.gladiator.environment.Port;
 import org.gladiator.util.chat.ChatUtils;
-import org.gladiator.util.validation.InputValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Factory class for creating {@link ServerConfig} instances.
- */
+/** Factory class for creating {@link ServerConfig} instances. */
 public class ServerConfigFactory {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ServerConfigFactory.class);
@@ -34,12 +30,9 @@ public class ServerConfigFactory {
    * @return a {@link ServerConfig} instance
    */
   public ServerConfig create() {
-    String isCustom;
+    final boolean isCustom = chatUtils.askUserBinaryOption("Change the default settings?", false);
 
-    isCustom = chatUtils.getUserInput("Want to change the default settings? y/N: ");
-    isCustom = isCustom.toUpperCase(Locale.ROOT);
-
-    return "Y".equals(isCustom) ? createCustom() : createDefault();
+    return isCustom ? createCustom() : createDefault();
   }
 
   /**
@@ -48,20 +41,15 @@ public class ServerConfigFactory {
    * @return the custom server name
    */
   private String getCustomName() {
-    String serverName;
 
     final String serverDefaultName = ServerConfig.getDefaultName();
-    serverName = chatUtils.askUserOption("Server Name",
-        serverDefaultName, USER_NAME_MAX_LENGTH);
-    serverName = serverName.trim();
 
-    if (InputValidator.isUserNameNotValid(serverName)) {
-      LOGGER.error("Server name has more than " + USER_NAME_MAX_LENGTH
-          + " characters, using default name");
-      serverName = serverDefaultName;
-    }
+    return chatUtils.askUserOption("Server Name", serverDefaultName, USER_NAME_MAX_LENGTH);
+  }
 
-    return serverName;
+  private boolean getEnableUpnp() {
+    return chatUtils.askUserBinaryOption(
+        "Open gateway port automatically via UPnP service?", false);
   }
 
   /**
@@ -72,8 +60,9 @@ public class ServerConfigFactory {
   private int getCustomPort() {
     int serverPort;
     try {
-      serverPort = Integer.parseInt(
-          chatUtils.askUserOption("Server Port", String.valueOf(Port.PORT_DEFAULT)));
+      serverPort =
+          Integer.parseInt(
+              chatUtils.askUserOption("Server Port", String.valueOf(Port.PORT_DEFAULT)));
       Validate.inclusiveBetween(Port.PORT_MIN, Port.PORT_MAX, serverPort);
 
     } catch (final NumberFormatException e) {
@@ -96,8 +85,9 @@ public class ServerConfigFactory {
 
     final String serverName = getCustomName();
     final int serverPort = getCustomPort();
+    final boolean enableUpnp = getEnableUpnp();
 
-    return new ServerConfig(serverName, serverPort);
+    return new ServerConfig(serverName, serverPort, enableUpnp);
   }
 
   /**

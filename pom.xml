@@ -49,6 +49,7 @@
     <plugin.nullaway>0.10.15</plugin.nullaway>
     <plugin.checkstyle>3.6.0</plugin.checkstyle>
     <plugin.spotbugs>4.8.6.6</plugin.spotbugs>
+    <plugin.spotless>3.0.0</plugin.spotless>
     <plugin.conventional.changelog>2.2.0</plugin.conventional.changelog>
     <plugin.maven.shade>3.6.0</plugin.maven.shade>
     <plugin.exec.maven>3.5.0</plugin.exec.maven>
@@ -121,6 +122,29 @@
               <goal>check</goal>
             </goals>
             <phase>verify</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- Spotless -->
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>${plugin.spotless}</version>
+        <configuration>
+          <java>
+            <importOrder/>
+            <removeUnusedImports/>
+            <formatAnnotations/>
+            <googleJavaFormat/>
+          </java>
+        </configuration>
+        <executions>
+          <execution>
+            <id>spotless-check-code-style</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>

@@ -4,12 +4,11 @@ import java.util.Objects;
 import org.apache.commons.lang3.Validate;
 import org.gladiator.environment.Port;
 
-/**
- * Represents the configuration for a server, including its name and port.
- */
-public record ServerConfig(String name, int port) {
+/** Represents the configuration for a server, including its name and port. */
+public record ServerConfig(String name, int port, boolean enableUpnp) {
 
   private static final String DEFAULT_NAME = "Server";
+  private static final boolean DEFAULT_ENABLE_UPNP = false;
 
   /**
    * Constructs a new ServerConfig with the specified name and port.
@@ -21,11 +20,9 @@ public record ServerConfig(String name, int port) {
     validateArgs(name, port);
   }
 
-  /**
-   * Constructs a new ServerConfig with default name and port.
-   */
+  /** Constructs a new ServerConfig with default name and port. */
   public ServerConfig() {
-    this(getDefaultName(), Port.PORT_DEFAULT);
+    this(getDefaultName(), Port.PORT_DEFAULT, DEFAULT_ENABLE_UPNP);
   }
 
   /**
@@ -42,7 +39,7 @@ public record ServerConfig(String name, int port) {
    *
    * @param name the name of the server
    * @param port the port number of the server
-   * @throws NullPointerException     if the name is null
+   * @throws NullPointerException if the name is null
    * @throws IllegalArgumentException if the name is blank or the port is out of range
    */
   private void validateArgs(final String name, final int port) {
