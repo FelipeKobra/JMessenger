@@ -46,6 +46,7 @@ public final class Server implements AutoCloseable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
   private final List<Connection> clientConnections = new CopyOnWriteArrayList<>();
+  private final List<Socket> clientSockets = new CopyOnWriteArrayList<>();
   private final AtomicBoolean isClosingManually = new AtomicBoolean(false);
   private final CryptographyManager cryptographyManager;
 
@@ -173,6 +174,8 @@ public final class Server implements AutoCloseable {
 
         final Connection clientConnection =
             handleNewClientConnection(socketIo, clientName, clientAesKey);
+
+        clientSockets.add(clientSocket);
 
         receiveMessages(clientConnection);
       } catch (final IOException e) {
@@ -413,14 +416,27 @@ public final class Server implements AutoCloseable {
 
     isClosingManually.set(true);
 
-    final CompletableFuture<?>[] closeConnectionsFuture =
-        clientConnections.stream()
-            .map(connection -> CompletableFuture.runAsync(connection::close))
-            .toArray(CompletableFuture<?>[]::new);
+    final List<CompletableFuture<?>> closeFutures = new ArrayList<>();
+
+    for (final Connection connection : clientConnections) {
+      closeFutures.add(CompletableFuture.runAsync(connection::close));
+    }
+
+    for (final Socket socket : clientSockets) {
+      closeFutures.add(
+          CompletableFuture.runAsync(
+              () -> {
+                try {
+                  socket.close();
+                } catch (final IOException e) {
+                  LOGGER.error("Error closing socket", e);
+                }
+              }));
+    }
 
     closeServerSocket();
     chatUtils.close();
+    CompletableFuture.allOf(closeFutures.toArray(new CompletableFuture[0])).join();
     executor.shutdownNow();
-    CompletableFuture.allOf(closeConnectionsFuture).join();
   }
 }

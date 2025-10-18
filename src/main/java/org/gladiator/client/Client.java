@@ -156,8 +156,7 @@ public final class Client implements AutoCloseable {
    * @throws EndApplicationException if an error occurs during client execution
    */
   public void run() throws EndApplicationException {
-    try {
-      final Socket socket = createSocket();
+    try (final Socket socket = createSocket()) {
       final Connection serverConnection = establishConnection(socket);
       startCommunication(serverConnection);
       serverConnection.close();
@@ -209,7 +208,7 @@ public final class Client implements AutoCloseable {
    * Creates and handles a new connection to the server by displaying connection messages and
    * creating a {@link Connection} object.
    *
-   * @param socketIo The socketIO conected to the server.
+   * @param socketIo The socketIO connected to the server.
    * @param serverName The name of the server.
    * @param ownAesKey The AES key used for encryption.
    * @return The {@link Connection} object representing the server connection.
