@@ -186,7 +186,7 @@ public final class Client implements AutoCloseable {
         new NameExchange(ownAesKey, cryptographyManager, config.name(), executor)
             .exchange(socketIo);
 
-    return handleNewConnection(socketIo, serverName, ownAesKey);
+    return handleNewConnection(socketIo, socket, serverName, ownAesKey);
   }
 
   /**
@@ -208,15 +208,19 @@ public final class Client implements AutoCloseable {
    * creating a {@link Connection} object.
    *
    * @param socketIo The socketIO connected to the server.
+   * @param socket The socket connected to the server.
    * @param serverName The name of the server.
    * @param ownAesKey The AES key used for encryption.
    * @return The {@link Connection} object representing the server connection.
    */
   private Connection handleNewConnection(
-      final SocketIo socketIo, final String serverName, final SecretKey ownAesKey) {
+      final SocketIo socketIo,
+      final Socket socket,
+      final String serverName,
+      final SecretKey ownAesKey) {
     chatUtils.displayBanner("Connection Established with " + serverName);
     chatUtils.displayOnScreen("Type `quit` to exit");
-    return Connection.create(serverName, socketIo, ownAesKey);
+    return Connection.create(serverName, socketIo, socket, ownAesKey);
   }
 
   /**

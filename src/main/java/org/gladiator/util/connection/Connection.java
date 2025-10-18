@@ -2,6 +2,7 @@ package org.gladiator.util.connection;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.Socket;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.crypto.SecretKey;
@@ -29,6 +30,7 @@ public final class Connection implements AutoCloseable {
   private final String name;
 
   private final SocketIo socketIo;
+  private final Socket socket;
   private final SecretKey aesKey;
 
   /**
@@ -36,10 +38,13 @@ public final class Connection implements AutoCloseable {
    *
    * @param name The name of the client.
    * @param socketIo The SocketIo for the connection.
+   * @param socket The socket for the connection.
    * @throws NullPointerException if any of the parameters are null.
    * @throws IllegalArgumentException if the name is blank.
    */
-  private Connection(final String name, final SocketIo socketIo, final SecretKey aesKey) {
+  private Connection(
+      final String name, final SocketIo socketIo, final Socket socket, final SecretKey aesKey) {
+    this.socket = socket;
     Validate.notBlank(name);
     this.socketIo = socketIo;
     this.aesKey = aesKey;
@@ -55,8 +60,8 @@ public final class Connection implements AutoCloseable {
    * @return A new Connection instance.
    */
   public static Connection create(
-      final String name, final SocketIo socketIo, final SecretKey aesKey) {
-    return new Connection(name, socketIo, aesKey);
+      final String name, final SocketIo socketIo, final Socket socket, final SecretKey aesKey) {
+    return new Connection(name, socketIo, socket, aesKey);
   }
 
   /**
@@ -109,6 +114,7 @@ public final class Connection implements AutoCloseable {
   public void close() {
     try {
       socketIo.close();
+      socket.close();
     } catch (final IOException e) {
       LOGGER.error("Error closing the connection: {}", e, e);
     }

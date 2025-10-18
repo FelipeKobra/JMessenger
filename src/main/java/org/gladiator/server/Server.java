@@ -45,7 +45,6 @@ public final class Server implements AutoCloseable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
   private final List<Connection> clientConnections = new CopyOnWriteArrayList<>();
-  private final List<Socket> clientSockets = new CopyOnWriteArrayList<>();
   private final AtomicBoolean isClosingManually = new AtomicBoolean(false);
   private final CryptographyManager cryptographyManager;
 
@@ -172,9 +171,7 @@ public final class Server implements AutoCloseable {
                 .exchange(socketIo);
 
         final Connection clientConnection =
-            handleNewClientConnection(socketIo, clientName, clientAesKey);
-
-        clientSockets.add(clientSocket);
+            handleNewClientConnection(socketIo, clientSocket, clientName, clientAesKey);
 
         receiveMessages(clientConnection);
       } catch (final IOException e) {
@@ -194,14 +191,19 @@ public final class Server implements AutoCloseable {
    * of client connections, and broadcasting a {@link NewConnectionMessage} to other clients.
    *
    * @param socketIo The SocketIo for the client connection.
+   * @param socket The socket for the client connection.
    * @param clientName The name of the client.
    * @param clientAesKey The AES key for encrypting/decrypting messages with the client.
    * @return The Connection object representing the client's connection.
    */
   private Connection handleNewClientConnection(
-      final SocketIo socketIo, final String clientName, final SecretKey clientAesKey) {
+      final SocketIo socketIo,
+      final Socket socket,
+      final String clientName,
+      final SecretKey clientAesKey) {
 
-    final Connection clientConnection = Connection.create(clientName, socketIo, clientAesKey);
+    final Connection clientConnection =
+        Connection.create(clientName, socketIo, socket, clientAesKey);
 
     clientConnections.add(clientConnection);
     final Message newConnectionMessage = new NewConnectionMessage(clientName);
@@ -419,18 +421,6 @@ public final class Server implements AutoCloseable {
 
     for (final Connection connection : clientConnections) {
       closeFutures.add(CompletableFuture.runAsync(connection::close));
-    }
-
-    for (final Socket socket : clientSockets) {
-      closeFutures.add(
-          CompletableFuture.runAsync(
-              () -> {
-                try {
-                  socket.close();
-                } catch (final IOException e) {
-                  LOGGER.error("Error closing socket", e);
-                }
-              }));
     }
 
     closeServerSocket();
