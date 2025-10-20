@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.14.3](https://github.com/FelipeKobra/JMessenger/compare/v0.14.3...master) (2025-10-20)
+
+
+### Features
+
+-  create all commands and command system ([d2e652cbb477c11](https://github.com/FelipeKobra/JMessenger/commit/d2e652cbb477c11))
+-  create ban and kick messages ([84a6087850ef6e2](https://github.com/FelipeKobra/JMessenger/commit/84a6087850ef6e2))
+
+### Bug Fixes
+
+-  solve better practices sonar problems ([36f4eab1383a091](https://github.com/FelipeKobra/JMessenger/commit/36f4eab1383a091))
+
 ## [v0.14.0](https://github.com/FelipeKobra/JMessenger/compare/v0.14.0...master) (2025-10-18)
 
 

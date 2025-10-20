@@ -1,5 +1,6 @@
 package org.gladiator.util.chat;
 
+import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Objects;
@@ -89,7 +90,7 @@ public final class ChatUtils implements AutoCloseable {
    *
    * @param message the system message to display (may be {@code null})
    */
-  public void showSystemMessage(final String message) {
+  public void showSystemMessage(@Nullable final String message) {
     cleanLine();
     displayOnScreen(message);
   }
@@ -121,7 +122,7 @@ public final class ChatUtils implements AutoCloseable {
    *
    * @param msg The message to display.
    */
-  public void displayOnScreen(final String msg) {
+  public void displayOnScreen(@Nullable final String msg) {
     terminal.writer().println(msg);
   }
 

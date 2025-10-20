@@ -1,5 +1,6 @@
 package org.gladiator.server.admin;
 
+import jakarta.annotation.Nullable;
 import java.util.regex.Pattern;
 
 /**
@@ -58,6 +59,7 @@ public final class CommandUtils {
    * @throws NullPointerException if {@code commandString} is {@code null}
    * @throws IndexOutOfBoundsException if {@code commandString} is empty
    */
+  @Nullable
   public static Command getCommandByString(final String commandString) {
     String commandWithoutBar = commandString.substring(1);
     commandWithoutBar =

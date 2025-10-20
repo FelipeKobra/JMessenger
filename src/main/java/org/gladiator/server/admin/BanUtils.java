@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.gladiator.server.Server;
@@ -35,8 +36,7 @@ public final class BanUtils {
   private static final int SECOND_TO_DAY_MULTI = 86400;
   private static final int DAYS_YEAR = 365;
 
-  private BanUtils() {
-  }
+  private BanUtils() {}
 
   private static boolean isPermanentIndicator(final String input) {
     return input.isBlank()
@@ -112,7 +112,7 @@ public final class BanUtils {
    * @throws IllegalArgumentException if the input cannot be parsed as any supported format
    */
   public static Instant parseBanInputToInstant(final String input) {
-    final String formattedInput = input.trim().toLowerCase();
+    final String formattedInput = input.trim().toLowerCase(Locale.ROOT);
 
     if (isPermanentIndicator(formattedInput)) {
       return Instant.now().plus(100 * (long) DAYS_YEAR, ChronoUnit.DAYS);
@@ -149,7 +149,7 @@ public final class BanUtils {
     duration = duration.minusHours(hours);
     final long minutes = duration.toMinutes();
     duration = duration.minusMinutes(minutes);
-    final long seconds = duration.getSeconds();
+    final long seconds = duration.toSeconds();
 
     final StringBuilder sb = new StringBuilder();
     if (0 < days) {
