@@ -79,6 +79,11 @@ public final class ChatUtils implements AutoCloseable {
     showBufferedUserPrompt();
   }
 
+  public void showSystemMessage(final String message) {
+    cleanLine();
+    displayOnScreen(message);
+  }
+
   /**
    * Reads user input from the console using the default prompt.
    *

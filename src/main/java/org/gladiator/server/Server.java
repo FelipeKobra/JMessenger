@@ -1,25 +1,39 @@
 package org.gladiator.server;
 
+import static org.gladiator.server.admin.CommandUtils.BAN_PATTERN;
+import static org.gladiator.server.admin.CommandUtils.formatCommandList;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.BindException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.security.Key;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
 import javax.crypto.SecretKey;
 import javax.net.ServerSocketFactory;
 import org.gladiator.exception.EndApplicationException;
 import org.gladiator.exception.FailedExchangeException;
 import org.gladiator.exception.InvalidMessageException;
+import org.gladiator.server.admin.BanUtils;
+import org.gladiator.server.admin.Command;
+import org.gladiator.server.admin.CommandUtils;
 import org.gladiator.server.config.ServerConfig;
 import org.gladiator.server.config.ServerConfigFactory;
 import org.gladiator.server.network.PortMapper;
@@ -29,7 +43,9 @@ import org.gladiator.util.connection.SocketIo;
 import org.gladiator.util.connection.exchange.NameExchange;
 import org.gladiator.util.connection.message.ConnectionMessageFactory;
 import org.gladiator.util.connection.message.NonServerSideOnlyPredicate;
+import org.gladiator.util.connection.message.model.BanMessage;
 import org.gladiator.util.connection.message.model.DisconnectMessage;
+import org.gladiator.util.connection.message.model.KickMessage;
 import org.gladiator.util.connection.message.model.Message;
 import org.gladiator.util.connection.message.model.NewConnectionMessage;
 import org.gladiator.util.connection.message.model.SimpleMessage;
@@ -40,11 +56,15 @@ import org.jline.reader.UserInterruptException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Represents a server that manages connections with clients. */
+/**
+ * Represents a server that manages connections with clients.
+ */
 public final class Server implements AutoCloseable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
+
   private final List<Connection> clientConnections = new CopyOnWriteArrayList<>();
+  private final Map<InetAddress, Instant> bannedUsers = new ConcurrentHashMap<>();
   private final AtomicBoolean isClosingManually = new AtomicBoolean(false);
   private final CryptographyManager cryptographyManager;
 
@@ -57,10 +77,10 @@ public final class Server implements AutoCloseable {
    * Constructs a new Server instance.
    *
    * @param cryptographyManager the RSA cryptography keys manager
-   * @param serverConfig the server configuration
-   * @param serverSocket the server socket
-   * @param chatUtils the chat utilities
-   * @param executor the executor service
+   * @param serverConfig        the server configuration
+   * @param serverSocket        the server socket
+   * @param chatUtils           the chat utilities
+   * @param executor            the executor service
    */
   private Server(
       final CryptographyManager cryptographyManager,
@@ -109,7 +129,7 @@ public final class Server implements AutoCloseable {
   /**
    * Creates a ServerSocket bound to the specified port.
    *
-   * @param port the port number to bind the ServerSocket to
+   * @param port      the port number to bind the ServerSocket to
    * @param chatUtils the ChatUtils instance for user interaction
    * @return a ServerSocket bound to the specified port
    * @throws EndApplicationException if an error occurs during ServerSocket creation
@@ -130,7 +150,9 @@ public final class Server implements AutoCloseable {
     return serverSocket;
   }
 
-  /** Starts the server, begins listening and broadcasting for connections. */
+  /**
+   * Starts the server, begins listening and broadcasting for connections.
+   */
   public void runServer() {
     LOGGER.info("Server Started...");
 
@@ -173,6 +195,39 @@ public final class Server implements AutoCloseable {
         final Connection clientConnection =
             handleNewClientConnection(socketIo, clientSocket, clientName, clientAesKey);
 
+        if (bannedUsers.containsKey(clientSocket.getInetAddress())
+            && Instant.now().isBefore(bannedUsers.get(clientSocket.getInetAddress()))) {
+          final Message bannedUserMessage =
+              new SimpleMessage(
+                  serverConfig.name(),
+                  "You are banned from this server until "
+                      + bannedUsers.get(clientSocket.getInetAddress()).toString());
+          clientConnection.writeOutput(bannedUserMessage, cryptographyManager);
+          continue;
+        }
+
+        boolean duplicateFound = false;
+
+        for (final Connection connection : clientConnections) {
+          if (connection.getName().equalsIgnoreCase(clientName) && connection != clientConnection) {
+            final Message duplicateUserMessage =
+                new SimpleMessage(
+                    serverConfig.name(),
+                    "A user with the name "
+                        + clientName
+                        + " is already connected. Connection will be closed.");
+            clientConnection.writeOutput(duplicateUserMessage, cryptographyManager);
+
+            closeConnection(clientConnection);
+            duplicateFound = true;
+            break;
+          }
+        }
+
+        if (duplicateFound) {
+          continue;
+        }
+
         receiveMessages(clientConnection);
       } catch (final IOException e) {
         LOGGER.debug(
@@ -190,9 +245,9 @@ public final class Server implements AutoCloseable {
    * Handles a new client connection by creating a {@link Connection} object, adding it to the list
    * of client connections, and broadcasting a {@link NewConnectionMessage} to other clients.
    *
-   * @param socketIo The SocketIo for the client connection.
-   * @param socket The socket for the client connection.
-   * @param clientName The name of the client.
+   * @param socketIo     The SocketIo for the client connection.
+   * @param socket       The socket for the client connection.
+   * @param clientName   The name of the client.
    * @param clientAesKey The AES key for encrypting/decrypting messages with the client.
    * @return The Connection object representing the client's connection.
    */
@@ -271,20 +326,21 @@ public final class Server implements AutoCloseable {
     }
   }
 
-  /** Broadcasts messages to all connected clients. */
+  /**
+   * Broadcasts messages to all connected clients.
+   */
   private void broadcastToConnections() {
     LOGGER.debug("Broadcasting to connections...");
-    LOGGER.info("Type `quit` to exit");
+    LOGGER.info("Type `/help` to display all commands");
 
     try {
       String line = chatUtils.getUserInput();
 
       while (null != line) {
-        if ("quit".equals(line)) {
-          break;
-        }
 
-        if (!line.isBlank()) {
+        if (line.startsWith("/")) {
+          handleCommand(line);
+        } else if (!line.isBlank()) {
           final Message msg = new SimpleMessage(serverConfig.name(), line);
           broadcastMessageToConnections(msg);
         }
@@ -294,6 +350,156 @@ public final class Server implements AutoCloseable {
       LOGGER.debug(ChatUtils.USER_INTERRUPT_MESSAGE, e);
     } finally {
       executor.shutdownNow();
+    }
+  }
+
+  private void handleCommand(final String commandLine) {
+    final Command command = CommandUtils.getCommandByString(commandLine);
+
+    if (null == command) {
+      chatUtils.displayOnScreen("Unknown command. Type /help for a list of commands.");
+    }
+
+    if (null != command) {
+      switch (command) {
+        case QUIT -> quitCommand();
+        case HELP -> helpCommand(chatUtils);
+        case BAN -> banCommand(commandLine, chatUtils, clientConnections, bannedUsers);
+        case UNBAN -> unbanCommand(commandLine, chatUtils, bannedUsers);
+        case KICK -> kickCommand(commandLine, chatUtils, clientConnections);
+        case SHOW_USERS -> showUsersCommand(chatUtils, clientConnections);
+        case SHOW_BANS -> showBansCommand(chatUtils, bannedUsers);
+        default ->
+            chatUtils.showSystemMessage("Unknown command. Type /help for a list of commands.");
+      }
+    }
+  }
+
+  private void quitCommand() {
+    throw new UserInterruptException("User requested to quit the application");
+  }
+
+  private void helpCommand(final ChatUtils chatUtils) {
+    chatUtils.showSystemMessage(formatCommandList());
+  }
+
+  private void banCommand(final String commandLine, final ChatUtils chatUtils,
+      final List<Connection> clientConnections,
+      final Map<InetAddress, Instant> bannedUsers) {
+    try {
+      final Matcher matcher = BAN_PATTERN.matcher(commandLine);
+
+      if (matcher.matches()) {
+        final String user = matcher.group(1);
+
+        String duration = matcher.group(2);
+
+        if (null == duration) {
+          duration = "perma";
+        }
+
+        final Instant durationInstant = BanUtils.parseBanInputToInstant(duration);
+        final String formattedDuration = BanUtils.formatRemaining(durationInstant);
+
+        final String reason = null != matcher.group(3) ? matcher.group(3) : "";
+
+        final Optional<Connection> userConnectionOpt =
+            clientConnections.stream()
+                .filter(conn -> conn.getName().equalsIgnoreCase(user))
+                .findFirst();
+
+        if (userConnectionOpt.isPresent()) {
+          final Connection userConnection = userConnectionOpt.get();
+          bannedUsers.put(userConnection.getIp(), durationInstant);
+          final Message banMessage = new BanMessage(formattedDuration, user, reason);
+          broadcastMessageToConnections(banMessage);
+          userConnection.removeConnection(clientConnections);
+          chatUtils.showSystemMessage("User " + user + " has been banned.");
+        } else {
+          chatUtils.showSystemMessage("User " + user + " is not connected.");
+        }
+
+      } else {
+        chatUtils.showSystemMessage(formatCommandList());
+      }
+    } catch (final IllegalArgumentException e) {
+      chatUtils.showSystemMessage(e.getMessage());
+    }
+  }
+
+  private void unbanCommand(final String commandLine, final ChatUtils chatUtils,
+      final Map<InetAddress, Instant> bannedUsers) {
+    try {
+      final String[] parts = commandLine.split("\\s+", 2);
+      if (2 > parts.length) {
+        chatUtils.showSystemMessage(formatCommandList());
+        return;
+      }
+      final String stringIpToUnban = parts[1].trim();
+      final InetAddress ipToUnban = InetAddress.getByName(stringIpToUnban);
+      if (null != bannedUsers.remove(ipToUnban)) {
+        chatUtils.showSystemMessage("User " + stringIpToUnban + " has been unbanned.");
+      } else {
+        chatUtils.showSystemMessage("User " + stringIpToUnban + " is not banned.");
+      }
+    } catch (final UnknownHostException e) {
+      chatUtils.showSystemMessage("Invalid IP address.");
+    }
+  }
+
+  private void kickCommand(final String commandLine, final ChatUtils chatUtils,
+      final List<Connection> clientConnections) {
+    final String[] parts = commandLine.split("\\s+", 2);
+    if (2 > parts.length) {
+      chatUtils.showSystemMessage(formatCommandList());
+      return;
+    }
+    final String userToKick = parts[1].trim();
+    final Optional<Connection> userConnectionOpt =
+        clientConnections.stream()
+            .filter(conn -> conn.getName().equalsIgnoreCase(userToKick))
+            .findFirst();
+
+    if (userConnectionOpt.isPresent()) {
+      final Connection userConnection = userConnectionOpt.get();
+      final Message kickMessage = new KickMessage(userToKick);
+      broadcastMessageToConnections(kickMessage);
+      userConnection.removeConnection(clientConnections);
+      chatUtils.showSystemMessage("User " + userToKick + " has been kicked.");
+    } else {
+      chatUtils.showSystemMessage("User " + userToKick + " is not connected.");
+    }
+  }
+
+  private void showUsersCommand(final ChatUtils chatUtils,
+      final List<Connection> clientConnections) {
+    if (clientConnections.isEmpty()) {
+      chatUtils.showSystemMessage("No users are currently connected.");
+    } else {
+      final StringBuilder userList = new StringBuilder("Connected users:\n");
+      for (final Connection connection : clientConnections) {
+        userList.append("- ").append(connection.getName()).append("\n");
+      }
+      chatUtils.showSystemMessage(userList.toString().trim());
+    }
+  }
+
+  private void showBansCommand(final ChatUtils chatUtils,
+      final Map<InetAddress, Instant> bannedUsers) {
+    if (bannedUsers.isEmpty()) {
+      chatUtils.showSystemMessage("No users are currently banned.");
+    } else {
+      final StringBuilder banList = new StringBuilder("Banned users:\n");
+      for (final Entry<InetAddress, Instant> entry : bannedUsers.entrySet()) {
+        final String formattedTime = BanUtils.formatRemaining(entry.getValue());
+        banList
+            .append("- ")
+            .append(entry.getKey().getHostAddress())
+            .append(" | Banned until: ")
+            .append(formattedTime)
+            .append("\n");
+      }
+      chatUtils.showSystemMessage(banList.toString().trim());
     }
   }
 
@@ -363,7 +569,7 @@ public final class Server implements AutoCloseable {
   /**
    * Sends a message to all connected clients, except the client that sent the message.
    *
-   * @param message The message to be sent.
+   * @param message    The message to be sent.
    * @param connection The connection to the client that sent the message.
    */
   private void sendToOtherConnections(final Message message, final Connection connection) {
@@ -401,7 +607,9 @@ public final class Server implements AutoCloseable {
     }
   }
 
-  /** Closes the server socket. */
+  /**
+   * Closes the server socket.
+   */
   private void closeServerSocket() {
     try {
       serverSocket.close();
@@ -410,7 +618,9 @@ public final class Server implements AutoCloseable {
     }
   }
 
-  /** Closes the server and all client connections. */
+  /**
+   * Closes the server and all client connections.
+   */
   @Override
   public void close() {
     LOGGER.info("Closing all connections...");

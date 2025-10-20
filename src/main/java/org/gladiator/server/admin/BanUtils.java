@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -86,14 +87,14 @@ public final class BanUtils {
    * </ul>
    *
    * @param input user-provided ban string
-   * @return expiry Instant, or null to signal a permanent ban
+   * @return expiry Instant
    * @throws IllegalArgumentException if the input cannot be parsed as any supported format
    */
   public static Instant parseBanInputToInstant(final String input) {
     final String formattedInput = input.trim().toLowerCase();
 
     if (isPermanentIndicator(formattedInput)) {
-      return null; // signal permanent (use separate flag)
+      return Instant.now().plus(100 * 365, ChronoUnit.DAYS);
     }
 
     if (isIsoFormat(formattedInput)) {
@@ -110,13 +111,11 @@ public final class BanUtils {
    *
    * <p>Examples: "1 day 2 hours 5 minutes", "Permanent", "Ban expired".
    *
-   * @param until expiry {@code Instant}, or {@code null} to indicate a permanent ban
+   * @param until expiry {@code Instant}
    * @return human-readable remaining time string
    */
-  static String formatRemaining(final Instant until) {
-    if (null == until) {
-      return "Permanent";
-    }
+  public static String formatRemaining(final Instant until) {
+
     final Instant now = Instant.now();
     if (now.isAfter(until)) {
       return "Ban expired";
