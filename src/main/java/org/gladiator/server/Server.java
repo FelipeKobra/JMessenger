@@ -61,8 +61,10 @@ import org.slf4j.LoggerFactory;
  */
 public final class Server implements AutoCloseable {
 
+  public static final String PERMA = "perma";
+  private static final String IS_NOT_CONNECTED = " is not connected.";
+  private static final String UNKNOWN_COMMAND_MESSAGE = "Unknown command. Type /help for a list of commands.";
   private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
-
   private final List<Connection> clientConnections = new CopyOnWriteArrayList<>();
   private final Map<InetAddress, Instant> bannedUsers = new ConcurrentHashMap<>();
   private final AtomicBoolean isClosingManually = new AtomicBoolean(false);
@@ -203,6 +205,7 @@ public final class Server implements AutoCloseable {
                   "You are banned from this server until "
                       + bannedUsers.get(clientSocket.getInetAddress()).toString());
           clientConnection.writeOutput(bannedUserMessage, cryptographyManager);
+          closeConnection(clientConnection);
           continue;
         }
 
@@ -357,7 +360,7 @@ public final class Server implements AutoCloseable {
     final Command command = CommandUtils.getCommandByString(commandLine);
 
     if (null == command) {
-      chatUtils.displayOnScreen("Unknown command. Type /help for a list of commands.");
+      chatUtils.displayOnScreen(UNKNOWN_COMMAND_MESSAGE);
     }
 
     if (null != command) {
@@ -369,8 +372,7 @@ public final class Server implements AutoCloseable {
         case KICK -> kickCommand(commandLine, chatUtils, clientConnections);
         case SHOW_USERS -> showUsersCommand(chatUtils, clientConnections);
         case SHOW_BANS -> showBansCommand(chatUtils, bannedUsers);
-        default ->
-            chatUtils.showSystemMessage("Unknown command. Type /help for a list of commands.");
+        default -> chatUtils.showSystemMessage(UNKNOWN_COMMAND_MESSAGE);
       }
     }
   }
@@ -383,7 +385,9 @@ public final class Server implements AutoCloseable {
     chatUtils.showSystemMessage(formatCommandList());
   }
 
-  private void banCommand(final String commandLine, final ChatUtils chatUtils,
+  private void banCommand(
+      final String commandLine,
+      final ChatUtils chatUtils,
       final List<Connection> clientConnections,
       final Map<InetAddress, Instant> bannedUsers) {
     try {
@@ -395,7 +399,7 @@ public final class Server implements AutoCloseable {
         String duration = matcher.group(2);
 
         if (null == duration) {
-          duration = "perma";
+          duration = PERMA;
         }
 
         final Instant durationInstant = BanUtils.parseBanInputToInstant(duration);
@@ -416,7 +420,7 @@ public final class Server implements AutoCloseable {
           userConnection.removeConnection(clientConnections);
           chatUtils.showSystemMessage("User " + user + " has been banned.");
         } else {
-          chatUtils.showSystemMessage("User " + user + " is not connected.");
+          chatUtils.showSystemMessage("User " + user + IS_NOT_CONNECTED);
         }
 
       } else {
@@ -427,7 +431,9 @@ public final class Server implements AutoCloseable {
     }
   }
 
-  private void unbanCommand(final String commandLine, final ChatUtils chatUtils,
+  private void unbanCommand(
+      final String commandLine,
+      final ChatUtils chatUtils,
       final Map<InetAddress, Instant> bannedUsers) {
     try {
       final String[] parts = commandLine.split("\\s+", 2);
@@ -447,7 +453,9 @@ public final class Server implements AutoCloseable {
     }
   }
 
-  private void kickCommand(final String commandLine, final ChatUtils chatUtils,
+  private void kickCommand(
+      final String commandLine,
+      final ChatUtils chatUtils,
       final List<Connection> clientConnections) {
     final String[] parts = commandLine.split("\\s+", 2);
     if (2 > parts.length) {
@@ -467,12 +475,12 @@ public final class Server implements AutoCloseable {
       userConnection.removeConnection(clientConnections);
       chatUtils.showSystemMessage("User " + userToKick + " has been kicked.");
     } else {
-      chatUtils.showSystemMessage("User " + userToKick + " is not connected.");
+      chatUtils.showSystemMessage("User " + userToKick + IS_NOT_CONNECTED);
     }
   }
 
-  private void showUsersCommand(final ChatUtils chatUtils,
-      final List<Connection> clientConnections) {
+  private void showUsersCommand(
+      final ChatUtils chatUtils, final List<Connection> clientConnections) {
     if (clientConnections.isEmpty()) {
       chatUtils.showSystemMessage("No users are currently connected.");
     } else {
@@ -484,8 +492,8 @@ public final class Server implements AutoCloseable {
     }
   }
 
-  private void showBansCommand(final ChatUtils chatUtils,
-      final Map<InetAddress, Instant> bannedUsers) {
+  private void showBansCommand(
+      final ChatUtils chatUtils, final Map<InetAddress, Instant> bannedUsers) {
     if (bannedUsers.isEmpty()) {
       chatUtils.showSystemMessage("No users are currently banned.");
     } else {

@@ -8,18 +8,37 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.gladiator.server.Server;
 
+/**
+ * Utility class containing helpers for parsing and formatting ban durations and expiries.
+ *
+ * <p>Responsibilities:
+ * <ul>
+ *   <li>Parse user-provided ban strings (numeric units like "1d2h30m", ISO local date-time, or
+ *       permanent indicators such as blank, `perma`, `perm`, `permanent`) into an {@link Instant}.</li>
+ *   <li>Format remaining time until a ban expiry into a human readable string (e.g. "1 day 2 hours").</li>
+ * </ul>
+ *
+ * <p>This class is a final utility class with only static methods and is not intended to be
+ * instantiated.
+ *
+ * @see #parseBanInputToInstant(String)
+ * @see #formatRemaining(Instant)
+ */
 public final class BanUtils {
 
   private static final int SECOND_TO_MINUTE_MULTI = 60;
   private static final int SECOND_TO_HOUR_MULTI = 3600;
   private static final int SECOND_TO_DAY_MULTI = 86400;
+  private static final int DAYS_YEAR = 365;
 
-  private BanUtils() {}
+  private BanUtils() {
+  }
 
   private static boolean isPermanentIndicator(final String input) {
     return input.isBlank()
-        || "perma".equals(input)
+        || Server.PERMA.equals(input)
         || "perm".equals(input)
         || "permanent".equals(input);
   }
@@ -94,7 +113,7 @@ public final class BanUtils {
     final String formattedInput = input.trim().toLowerCase();
 
     if (isPermanentIndicator(formattedInput)) {
-      return Instant.now().plus(100 * 365, ChronoUnit.DAYS);
+      return Instant.now().plus(100 * DAYS_YEAR, ChronoUnit.DAYS);
     }
 
     if (isIsoFormat(formattedInput)) {

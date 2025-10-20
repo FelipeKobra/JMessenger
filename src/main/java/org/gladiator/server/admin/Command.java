@@ -1,5 +1,18 @@
 package org.gladiator.server.admin;
 
+/**
+ * Represents administrative commands available on the server.
+ *
+ * <p>Each enum constant encapsulates:
+ * <ul>
+ *   <li>the command string used by administrators (e.g. {@code "kick"})</li>
+ *   <li>a short human-readable description of the command</li>
+ *   <li>usage instructions showing expected arguments</li>
+ * </ul>
+ *
+ * <p>Supported commands: {@link #KICK}, {@link #BAN}, {@link #UNBAN},
+ * {@link #QUIT}, {@link #HELP}, {@link #SHOW_USERS}, {@link #SHOW_BANS}.</p>
+ */
 public enum Command {
   KICK("kick", "Kick a user from the server", "/kick <username>"),
   BAN(
