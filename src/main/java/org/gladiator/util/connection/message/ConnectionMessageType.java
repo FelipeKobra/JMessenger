@@ -8,33 +8,21 @@ import org.gladiator.util.connection.message.model.Message;
 import org.gladiator.util.connection.message.model.NewConnectionMessage;
 import org.gladiator.util.connection.message.model.SimpleMessage;
 
-/**
- * Enum representing the types of connection messages.
- */
+/** Enum representing the types of connection messages. */
 public enum ConnectionMessageType {
-  /**
-   * Represents a simple message type.
-   */
+  /** Represents a simple message type. */
   SIMPLE(false, SimpleMessage::fromTransportString),
 
-  /**
-   * Represents a new connection message type.
-   */
+  /** Represents a new connection message type. */
   NEW_CONNECTION(true, NewConnectionMessage::fromTransportString),
 
-  /**
-   * Represents a disconnection message type.
-   */
+  /** Represents a disconnection message type. */
   DISCONNECTION(true, DisconnectMessage::fromTransportString),
 
-  /**
-   * Represents a kick user message type.
-   */
+  /** Represents a kick user message type. */
   KICK(true, KickMessage::fromTransportString),
 
-  /**
-   * Represents a ban user message type.
-   */
+  /** Represents a ban user message type. */
   BAN(true, BanMessage::fromTransportString);
 
   private final boolean serverSentOnly;
@@ -54,11 +42,11 @@ public enum ConnectionMessageType {
   /**
    * Convert a transport-format string into a typed {@link Message} instance.
    *
-   * <p>This method delegates parsing to the {@code messageFunction} configured
-   * for the enum constant (for example {@code SimpleMessage::fromTransportString}).
+   * <p>This method delegates parsing to the {@code messageFunction} configured for the enum
+   * constant (for example {@code SimpleMessage::fromTransportString}).
    *
    * @param message the raw transport string to convert; may be {@code null} depending on the
-   *                specific parser implementation
+   *     specific parser implementation
    * @return the parsed {@link Message} instance produced by the configured function
    */
   public Message fromTransportString(final String message) {

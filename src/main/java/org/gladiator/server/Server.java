@@ -56,14 +56,14 @@ import org.jline.reader.UserInterruptException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Represents a server that manages connections with clients.
- */
+/** Represents a server that manages connections with clients. */
 public final class Server implements AutoCloseable {
 
   public static final String PERMA = "perma";
+  public static final String USER = "User ";
   private static final String IS_NOT_CONNECTED = " is not connected.";
-  private static final String UNKNOWN_COMMAND_MESSAGE = "Unknown command. Type /help for a list of commands.";
+  private static final String UNKNOWN_COMMAND_MESSAGE =
+      "Unknown command. Type /help for a list of commands.";
   private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
   private final List<Connection> clientConnections = new CopyOnWriteArrayList<>();
   private final Map<InetAddress, Instant> bannedUsers = new ConcurrentHashMap<>();
@@ -79,10 +79,10 @@ public final class Server implements AutoCloseable {
    * Constructs a new Server instance.
    *
    * @param cryptographyManager the RSA cryptography keys manager
-   * @param serverConfig        the server configuration
-   * @param serverSocket        the server socket
-   * @param chatUtils           the chat utilities
-   * @param executor            the executor service
+   * @param serverConfig the server configuration
+   * @param serverSocket the server socket
+   * @param chatUtils the chat utilities
+   * @param executor the executor service
    */
   private Server(
       final CryptographyManager cryptographyManager,
@@ -131,7 +131,7 @@ public final class Server implements AutoCloseable {
   /**
    * Creates a ServerSocket bound to the specified port.
    *
-   * @param port      the port number to bind the ServerSocket to
+   * @param port the port number to bind the ServerSocket to
    * @param chatUtils the ChatUtils instance for user interaction
    * @return a ServerSocket bound to the specified port
    * @throws EndApplicationException if an error occurs during ServerSocket creation
@@ -152,9 +152,7 @@ public final class Server implements AutoCloseable {
     return serverSocket;
   }
 
-  /**
-   * Starts the server, begins listening and broadcasting for connections.
-   */
+  /** Starts the server, begins listening and broadcasting for connections. */
   public void runServer() {
     LOGGER.info("Server Started...");
 
@@ -182,65 +180,87 @@ public final class Server implements AutoCloseable {
   private void listenToConnections() {
     LOGGER.debug("Listening to connections...");
 
-    while (!serverSocket.isClosed() && serverSocket.isBound()) {
+    while (isServerRunning()) {
       try {
-        final Socket clientSocket = serverSocket.accept();
-
+        final Socket clientSocket = acceptClientSocket();
         final SocketIo socketIo = SocketIo.create(clientSocket);
-
-        final SecretKey clientAesKey = exchangeCryptographyKeys(socketIo);
-
-        final String clientName =
-            new NameExchange(clientAesKey, cryptographyManager, serverConfig.name(), executor)
-                .exchange(socketIo);
+        final SecretKey clientAesKey = exchangeKeys(socketIo);
+        final String clientName = exchangeClientName(socketIo, clientAesKey);
 
         final Connection clientConnection =
             handleNewClientConnection(socketIo, clientSocket, clientName, clientAesKey);
 
-        if (bannedUsers.containsKey(clientSocket.getInetAddress())
-            && Instant.now().isBefore(bannedUsers.get(clientSocket.getInetAddress()))) {
-          final Message bannedUserMessage =
-              new SimpleMessage(
-                  serverConfig.name(),
-                  "You are banned from this server until "
-                      + bannedUsers.get(clientSocket.getInetAddress()).toString());
-          clientConnection.writeOutput(bannedUserMessage, cryptographyManager);
-          closeConnection(clientConnection);
+        if (isClientBanned(clientSocket, clientConnection)
+            || isDuplicateClient(clientConnection, clientName)) {
           continue;
         }
 
-        boolean duplicateFound = false;
+        startMessageReceiver(clientConnection);
 
-        for (final Connection connection : clientConnections) {
-          if (connection.getName().equalsIgnoreCase(clientName) && connection != clientConnection) {
-            final Message duplicateUserMessage =
-                new SimpleMessage(
-                    serverConfig.name(),
-                    "A user with the name "
-                        + clientName
-                        + " is already connected. Connection will be closed.");
-            clientConnection.writeOutput(duplicateUserMessage, cryptographyManager);
-
-            closeConnection(clientConnection);
-            duplicateFound = true;
-            break;
-          }
-        }
-
-        if (duplicateFound) {
-          continue;
-        }
-
-        receiveMessages(clientConnection);
       } catch (final IOException e) {
-        LOGGER.debug(
-            "Connection listening ended normally or error during Socket Server accept method: {}",
-            e.getMessage());
+        LOGGER.debug("Socket accept ended or failed: {}", e.getMessage());
       } catch (final FailedExchangeException e) {
-        LOGGER.debug("Error during exchange name or Keys exchange", e);
+        LOGGER.debug("Key or name exchange failed", e);
       }
     }
 
+    shutdownExecutor();
+  }
+
+  private boolean isServerRunning() {
+    return !serverSocket.isClosed() && serverSocket.isBound();
+  }
+
+  private Socket acceptClientSocket() throws IOException {
+    return serverSocket.accept();
+  }
+
+  private SecretKey exchangeKeys(final SocketIo socketIo) throws FailedExchangeException {
+    return exchangeCryptographyKeys(socketIo);
+  }
+
+  private String exchangeClientName(final SocketIo socketIo, final SecretKey clientAesKey)
+      throws FailedExchangeException {
+    return new NameExchange(clientAesKey, cryptographyManager, serverConfig.name(), executor)
+        .exchange(socketIo);
+  }
+
+  private boolean isClientBanned(final Socket clientSocket, final Connection clientConnection) {
+    final InetAddress address = clientSocket.getInetAddress();
+    final Instant banEnd = bannedUsers.get(address);
+
+    if (null != banEnd && Instant.now().isBefore(banEnd)) {
+      final Message bannedUserMessage =
+          new SimpleMessage(serverConfig.name(), "You are banned from this server until " + banEnd);
+      clientConnection.writeOutput(bannedUserMessage, cryptographyManager);
+      closeConnection(clientConnection);
+      return true;
+    }
+    return false;
+  }
+
+  private boolean isDuplicateClient(final Connection clientConnection, final String clientName) {
+    for (final Connection connection : clientConnections) {
+      if (connection.getName().equalsIgnoreCase(clientName) && connection != clientConnection) {
+        final Message duplicateUserMessage =
+            new SimpleMessage(
+                serverConfig.name(),
+                "A user with the name "
+                    + clientName
+                    + " is already connected. Connection will be closed.");
+        clientConnection.writeOutput(duplicateUserMessage, cryptographyManager);
+        closeConnection(clientConnection);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void startMessageReceiver(final Connection clientConnection) {
+    receiveMessages(clientConnection);
+  }
+
+  private void shutdownExecutor() {
     executor.shutdownNow();
   }
 
@@ -248,9 +268,9 @@ public final class Server implements AutoCloseable {
    * Handles a new client connection by creating a {@link Connection} object, adding it to the list
    * of client connections, and broadcasting a {@link NewConnectionMessage} to other clients.
    *
-   * @param socketIo     The SocketIo for the client connection.
-   * @param socket       The socket for the client connection.
-   * @param clientName   The name of the client.
+   * @param socketIo The SocketIo for the client connection.
+   * @param socket The socket for the client connection.
+   * @param clientName The name of the client.
    * @param clientAesKey The AES key for encrypting/decrypting messages with the client.
    * @return The Connection object representing the client's connection.
    */
@@ -329,9 +349,7 @@ public final class Server implements AutoCloseable {
     }
   }
 
-  /**
-   * Broadcasts messages to all connected clients.
-   */
+  /** Broadcasts messages to all connected clients. */
   private void broadcastToConnections() {
     LOGGER.debug("Broadcasting to connections...");
     LOGGER.info("Type `/help` to display all commands");
@@ -418,9 +436,9 @@ public final class Server implements AutoCloseable {
           final Message banMessage = new BanMessage(formattedDuration, user, reason);
           broadcastMessageToConnections(banMessage);
           userConnection.removeConnection(clientConnections);
-          chatUtils.showSystemMessage("User " + user + " has been banned.");
+          chatUtils.showSystemMessage(USER + user + " has been banned.");
         } else {
-          chatUtils.showSystemMessage("User " + user + IS_NOT_CONNECTED);
+          chatUtils.showSystemMessage(USER + user + IS_NOT_CONNECTED);
         }
 
       } else {
@@ -444,9 +462,9 @@ public final class Server implements AutoCloseable {
       final String stringIpToUnban = parts[1].trim();
       final InetAddress ipToUnban = InetAddress.getByName(stringIpToUnban);
       if (null != bannedUsers.remove(ipToUnban)) {
-        chatUtils.showSystemMessage("User " + stringIpToUnban + " has been unbanned.");
+        chatUtils.showSystemMessage(USER + stringIpToUnban + " has been unbanned.");
       } else {
-        chatUtils.showSystemMessage("User " + stringIpToUnban + " is not banned.");
+        chatUtils.showSystemMessage(USER + stringIpToUnban + " is not banned.");
       }
     } catch (final UnknownHostException e) {
       chatUtils.showSystemMessage("Invalid IP address.");
@@ -473,9 +491,9 @@ public final class Server implements AutoCloseable {
       final Message kickMessage = new KickMessage(userToKick);
       broadcastMessageToConnections(kickMessage);
       userConnection.removeConnection(clientConnections);
-      chatUtils.showSystemMessage("User " + userToKick + " has been kicked.");
+      chatUtils.showSystemMessage(USER + userToKick + " has been kicked.");
     } else {
-      chatUtils.showSystemMessage("User " + userToKick + IS_NOT_CONNECTED);
+      chatUtils.showSystemMessage(USER + userToKick + IS_NOT_CONNECTED);
     }
   }
 
@@ -577,7 +595,7 @@ public final class Server implements AutoCloseable {
   /**
    * Sends a message to all connected clients, except the client that sent the message.
    *
-   * @param message    The message to be sent.
+   * @param message The message to be sent.
    * @param connection The connection to the client that sent the message.
    */
   private void sendToOtherConnections(final Message message, final Connection connection) {
@@ -615,9 +633,7 @@ public final class Server implements AutoCloseable {
     }
   }
 
-  /**
-   * Closes the server socket.
-   */
+  /** Closes the server socket. */
   private void closeServerSocket() {
     try {
       serverSocket.close();
@@ -626,9 +642,7 @@ public final class Server implements AutoCloseable {
     }
   }
 
-  /**
-   * Closes the server and all client connections.
-   */
+  /** Closes the server and all client connections. */
   @Override
   public void close() {
     LOGGER.info("Closing all connections...");

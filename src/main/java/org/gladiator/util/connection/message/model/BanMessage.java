@@ -8,14 +8,14 @@ import org.gladiator.util.connection.message.ConnectionMessageType;
 /**
  * Represents a ban message exchanged over the connection.
  *
- * <p>Contains the human-readable ban time, the username of the banned user and an optional
- * reason. Instances are validated to ensure {@code formattedBanTime} is not blank.
+ * <p>Contains the human-readable ban time, the username of the banned user and an optional reason.
+ * Instances are validated to ensure {@code formattedBanTime} is not blank.
  *
  * @param formattedBanTime human-readable ban duration or timestamp (must not be blank)
- * @param bannedUser       username of the banned user
- * @param banReason        optional reason for the ban; may be empty
- * @implSpec This record implements {@code Message} and corresponds to
- *     {@link ConnectionMessageType#BAN}
+ * @param bannedUser username of the banned user
+ * @param banReason optional reason for the ban; may be empty
+ * @implSpec This record implements {@code Message} and corresponds to {@link
+ *     ConnectionMessageType#BAN}
  */
 public record BanMessage(String formattedBanTime, String bannedUser, String banReason)
     implements Message {
@@ -28,8 +28,8 @@ public record BanMessage(String formattedBanTime, String bannedUser, String banR
    * <p>Enforces the record invariant that {@code formattedBanTime} is not blank.
    *
    * @param formattedBanTime human-readable ban duration or timestamp; must not be blank
-   * @param bannedUser       username of the banned user
-   * @param banReason        optional reason for the ban; may be empty
+   * @param bannedUser username of the banned user
+   * @param banReason optional reason for the ban; may be empty
    * @throws IllegalArgumentException if {@code formattedBanTime} is blank
    */
   public BanMessage {
@@ -40,17 +40,18 @@ public record BanMessage(String formattedBanTime, String bannedUser, String banR
    * Parses a transport-level message string and constructs a {@link BanMessage}.
    *
    * <p>Expected transport format:
+   *
    * <pre>
    * TYPE + MESSAGE_SPLITTER + bannedUser + MESSAGE_SPLITTER + formattedBanTime + MESSAGE_SPLITTER + banReason
    * </pre>
-   * <p>
-   * The {@code banReason} field may be empty. This method validates that the {@code message} is not
-   * blank and matches the expected BAN message pattern before parsing.
+   *
+   * <p>The {@code banReason} field may be empty. This method validates that the {@code message} is
+   * not blank and matches the expected BAN message pattern before parsing.
    *
    * @param message the transport string to parse
    * @return a new {@link BanMessage} instance representing the parsed values
    * @throws IllegalArgumentException if {@code message} is blank or does not match the expected BAN
-   *                                  message format
+   *     message format
    */
   public static Message fromTransportString(final String message) {
     Validate.notBlank(message);

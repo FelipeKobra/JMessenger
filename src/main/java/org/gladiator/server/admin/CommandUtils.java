@@ -14,8 +14,7 @@ public final class CommandUtils {
   public static final Pattern BAN_PATTERN =
       Pattern.compile("^/ban\\s+(\\S+)(?:\\s+(\\d+[smhdwSMHDW]*))?(?:\\s+(.+))?$");
 
-  private CommandUtils() {
-  }
+  private CommandUtils() {}
 
   /**
    * Build a human-readable list of available server administration commands.
@@ -45,18 +44,18 @@ public final class CommandUtils {
   /**
    * Resolve a {@link Command} from a raw command input string.
    *
-   * <p>The input is expected to start with a leading slash (for example {@code "/ban user"}).
-   * This method removes the leading {@code '/'} and then extracts the command token (the text up to
-   * the first space, or the entire remaining string if there is no space). The extracted token is
+   * <p>The input is expected to start with a leading slash (for example {@code "/ban user"}). This
+   * method removes the leading {@code '/'} and then extracts the command token (the text up to the
+   * first space, or the entire remaining string if there is no space). The extracted token is
    * compared case-insensitively against {@link Command#getCommandString()} for each enum value.
    *
-   * <p>Examples:
-   * - {@code "/kick alice"} -> checks {@code "kick"} - {@code "/list"} -> checks {@code "list"}
+   * <p>Examples: - {@code "/kick alice"} -> checks {@code "kick"} - {@code "/list"} -> checks
+   * {@code "list"}
    *
-   * @param commandString the raw command input (must start with {@code '/'} and not be
-   *                      {@code null})
+   * @param commandString the raw command input (must start with {@code '/'} and not be {@code
+   *     null})
    * @return the matching {@link Command}, or {@code null} if no matching command is found
-   * @throws NullPointerException      if {@code commandString} is {@code null}
+   * @throws NullPointerException if {@code commandString} is {@code null}
    * @throws IndexOutOfBoundsException if {@code commandString} is empty
    */
   public static Command getCommandByString(final String commandString) {

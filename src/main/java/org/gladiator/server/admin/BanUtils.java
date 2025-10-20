@@ -14,10 +14,12 @@ import org.gladiator.server.Server;
  * Utility class containing helpers for parsing and formatting ban durations and expiries.
  *
  * <p>Responsibilities:
+ *
  * <ul>
  *   <li>Parse user-provided ban strings (numeric units like "1d2h30m", ISO local date-time, or
- *       permanent indicators such as blank, `perma`, `perm`, `permanent`) into an {@link Instant}.</li>
- *   <li>Format remaining time until a ban expiry into a human readable string (e.g. "1 day 2 hours").</li>
+ *       permanent indicators such as blank, `perma`, `perm`, `permanent`) into an {@link Instant}.
+ *   <li>Format remaining time until a ban expiry into a human readable string (e.g. "1 day 2
+ *       hours").
  * </ul>
  *
  * <p>This class is a final utility class with only static methods and is not intended to be
@@ -113,7 +115,7 @@ public final class BanUtils {
     final String formattedInput = input.trim().toLowerCase();
 
     if (isPermanentIndicator(formattedInput)) {
-      return Instant.now().plus(100 * DAYS_YEAR, ChronoUnit.DAYS);
+      return Instant.now().plus(100 * (long) DAYS_YEAR, ChronoUnit.DAYS);
     }
 
     if (isIsoFormat(formattedInput)) {
