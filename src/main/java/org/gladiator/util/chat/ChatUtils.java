@@ -80,6 +80,21 @@ public final class ChatUtils implements AutoCloseable {
   }
 
   /**
+   * Displays a system message to the console.
+   *
+   * <p>This method clears the current input line so the system message does not mix with any
+   * buffered user input, and then prints the provided message using the configured terminal. It
+   * deliberately does not re-print the user prompt; callers that require the prompt to be restored
+   * should call {@link #showBufferedUserPrompt()} after this method.
+   *
+   * @param message the system message to display (may be {@code null})
+   */
+  public void showSystemMessage(final String message) {
+    cleanLine();
+    displayOnScreen(message);
+  }
+
+  /**
    * Reads user input from the console using the default prompt.
    *
    * @return The user input.

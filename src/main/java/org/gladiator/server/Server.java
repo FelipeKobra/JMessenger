@@ -1,25 +1,39 @@
 package org.gladiator.server;
 
+import static org.gladiator.server.admin.CommandUtils.BAN_PATTERN;
+import static org.gladiator.server.admin.CommandUtils.formatCommandList;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.BindException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.security.Key;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
 import javax.crypto.SecretKey;
 import javax.net.ServerSocketFactory;
 import org.gladiator.exception.EndApplicationException;
 import org.gladiator.exception.FailedExchangeException;
 import org.gladiator.exception.InvalidMessageException;
+import org.gladiator.server.admin.BanUtils;
+import org.gladiator.server.admin.Command;
+import org.gladiator.server.admin.CommandUtils;
 import org.gladiator.server.config.ServerConfig;
 import org.gladiator.server.config.ServerConfigFactory;
 import org.gladiator.server.network.PortMapper;
@@ -29,7 +43,9 @@ import org.gladiator.util.connection.SocketIo;
 import org.gladiator.util.connection.exchange.NameExchange;
 import org.gladiator.util.connection.message.ConnectionMessageFactory;
 import org.gladiator.util.connection.message.NonServerSideOnlyPredicate;
+import org.gladiator.util.connection.message.model.BanMessage;
 import org.gladiator.util.connection.message.model.DisconnectMessage;
+import org.gladiator.util.connection.message.model.KickMessage;
 import org.gladiator.util.connection.message.model.Message;
 import org.gladiator.util.connection.message.model.NewConnectionMessage;
 import org.gladiator.util.connection.message.model.SimpleMessage;
@@ -43,8 +59,14 @@ import org.slf4j.LoggerFactory;
 /** Represents a server that manages connections with clients. */
 public final class Server implements AutoCloseable {
 
+  public static final String PERMA = "perma";
+  public static final String USER = "User ";
+  private static final String IS_NOT_CONNECTED = " is not connected.";
+  private static final String UNKNOWN_COMMAND_MESSAGE =
+      "Unknown command. Type /help for a list of commands.";
   private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
   private final List<Connection> clientConnections = new CopyOnWriteArrayList<>();
+  private final Map<InetAddress, Instant> bannedUsers = new ConcurrentHashMap<>();
   private final AtomicBoolean isClosingManually = new AtomicBoolean(false);
   private final CryptographyManager cryptographyManager;
 
@@ -158,31 +180,87 @@ public final class Server implements AutoCloseable {
   private void listenToConnections() {
     LOGGER.debug("Listening to connections...");
 
-    while (!serverSocket.isClosed() && serverSocket.isBound()) {
+    while (isServerRunning()) {
       try {
-        final Socket clientSocket = serverSocket.accept();
-
+        final Socket clientSocket = acceptClientSocket();
         final SocketIo socketIo = SocketIo.create(clientSocket);
-
-        final SecretKey clientAesKey = exchangeCryptographyKeys(socketIo);
-
-        final String clientName =
-            new NameExchange(clientAesKey, cryptographyManager, serverConfig.name(), executor)
-                .exchange(socketIo);
+        final SecretKey clientAesKey = exchangeKeys(socketIo);
+        final String clientName = exchangeClientName(socketIo, clientAesKey);
 
         final Connection clientConnection =
             handleNewClientConnection(socketIo, clientSocket, clientName, clientAesKey);
 
-        receiveMessages(clientConnection);
+        if (isClientBanned(clientSocket, clientConnection)
+            || isDuplicateClient(clientConnection, clientName)) {
+          continue;
+        }
+
+        startMessageReceiver(clientConnection);
+
       } catch (final IOException e) {
-        LOGGER.debug(
-            "Connection listening ended normally or error during Socket Server accept method: {}",
-            e.getMessage());
+        LOGGER.debug("Socket accept ended or failed: {}", e.getMessage());
       } catch (final FailedExchangeException e) {
-        LOGGER.debug("Error during exchange name or Keys exchange", e);
+        LOGGER.debug("Key or name exchange failed", e);
       }
     }
 
+    shutdownExecutor();
+  }
+
+  private boolean isServerRunning() {
+    return !serverSocket.isClosed() && serverSocket.isBound();
+  }
+
+  private Socket acceptClientSocket() throws IOException {
+    return serverSocket.accept();
+  }
+
+  private SecretKey exchangeKeys(final SocketIo socketIo) throws FailedExchangeException {
+    return exchangeCryptographyKeys(socketIo);
+  }
+
+  private String exchangeClientName(final SocketIo socketIo, final SecretKey clientAesKey)
+      throws FailedExchangeException {
+    return new NameExchange(clientAesKey, cryptographyManager, serverConfig.name(), executor)
+        .exchange(socketIo);
+  }
+
+  private boolean isClientBanned(final Socket clientSocket, final Connection clientConnection) {
+    final InetAddress address = clientSocket.getInetAddress();
+    final Instant banEnd = bannedUsers.get(address);
+
+    if (null != banEnd && Instant.now().isBefore(banEnd)) {
+      final Message bannedUserMessage =
+          new SimpleMessage(serverConfig.name(), "You are banned from this server until " + banEnd);
+      clientConnection.writeOutput(bannedUserMessage, cryptographyManager);
+      closeConnection(clientConnection);
+      return true;
+    }
+    return false;
+  }
+
+  private boolean isDuplicateClient(final Connection clientConnection, final String clientName) {
+    for (final Connection connection : clientConnections) {
+      if (connection.getName().equalsIgnoreCase(clientName) && connection != clientConnection) {
+        final Message duplicateUserMessage =
+            new SimpleMessage(
+                serverConfig.name(),
+                "A user with the name "
+                    + clientName
+                    + " is already connected. Connection will be closed.");
+        clientConnection.writeOutput(duplicateUserMessage, cryptographyManager);
+        closeConnection(clientConnection);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void startMessageReceiver(final Connection clientConnection) {
+    receiveMessages(clientConnection);
+  }
+
+  private void shutdownExecutor() {
     executor.shutdownNow();
   }
 
@@ -274,17 +352,16 @@ public final class Server implements AutoCloseable {
   /** Broadcasts messages to all connected clients. */
   private void broadcastToConnections() {
     LOGGER.debug("Broadcasting to connections...");
-    LOGGER.info("Type `quit` to exit");
+    LOGGER.info("Type `/help` to display all commands");
 
     try {
       String line = chatUtils.getUserInput();
 
       while (null != line) {
-        if ("quit".equals(line)) {
-          break;
-        }
 
-        if (!line.isBlank()) {
+        if (line.startsWith("/")) {
+          handleCommand(line);
+        } else if (!line.isBlank()) {
           final Message msg = new SimpleMessage(serverConfig.name(), line);
           broadcastMessageToConnections(msg);
         }
@@ -294,6 +371,161 @@ public final class Server implements AutoCloseable {
       LOGGER.debug(ChatUtils.USER_INTERRUPT_MESSAGE, e);
     } finally {
       executor.shutdownNow();
+    }
+  }
+
+  private void handleCommand(final String commandLine) {
+    final Command command = CommandUtils.getCommandByString(commandLine);
+
+    if (null == command) {
+      chatUtils.displayOnScreen(UNKNOWN_COMMAND_MESSAGE);
+    }
+
+    if (null != command) {
+      switch (command) {
+        case QUIT -> quitCommand();
+        case HELP -> helpCommand(chatUtils);
+        case BAN -> banCommand(commandLine, chatUtils, clientConnections, bannedUsers);
+        case UNBAN -> unbanCommand(commandLine, chatUtils, bannedUsers);
+        case KICK -> kickCommand(commandLine, chatUtils, clientConnections);
+        case SHOW_USERS -> showUsersCommand(chatUtils, clientConnections);
+        case SHOW_BANS -> showBansCommand(chatUtils, bannedUsers);
+        default -> chatUtils.showSystemMessage(UNKNOWN_COMMAND_MESSAGE);
+      }
+    }
+  }
+
+  private void quitCommand() {
+    throw new UserInterruptException("User requested to quit the application");
+  }
+
+  private void helpCommand(final ChatUtils chatUtils) {
+    chatUtils.showSystemMessage(formatCommandList());
+  }
+
+  private void banCommand(
+      final String commandLine,
+      final ChatUtils chatUtils,
+      final List<Connection> clientConnections,
+      final Map<InetAddress, Instant> bannedUsers) {
+    try {
+      final Matcher matcher = BAN_PATTERN.matcher(commandLine);
+
+      if (matcher.matches()) {
+        final String user = matcher.group(1);
+
+        String duration = matcher.group(2);
+
+        if (null == duration) {
+          duration = PERMA;
+        }
+
+        final Instant durationInstant = BanUtils.parseBanInputToInstant(duration);
+        final String formattedDuration = BanUtils.formatRemaining(durationInstant);
+
+        final String reason = null != matcher.group(3) ? matcher.group(3) : "";
+
+        final Optional<Connection> userConnectionOpt =
+            clientConnections.stream()
+                .filter(conn -> conn.getName().equalsIgnoreCase(user))
+                .findFirst();
+
+        if (userConnectionOpt.isPresent()) {
+          final Connection userConnection = userConnectionOpt.get();
+          bannedUsers.put(userConnection.getIp(), durationInstant);
+          final Message banMessage = new BanMessage(formattedDuration, user, reason);
+          broadcastMessageToConnections(banMessage);
+          userConnection.removeConnection(clientConnections);
+          chatUtils.showSystemMessage(USER + user + " has been banned.");
+        } else {
+          chatUtils.showSystemMessage(USER + user + IS_NOT_CONNECTED);
+        }
+
+      } else {
+        chatUtils.showSystemMessage(formatCommandList());
+      }
+    } catch (final IllegalArgumentException e) {
+      chatUtils.showSystemMessage(e.getMessage());
+    }
+  }
+
+  private void unbanCommand(
+      final String commandLine,
+      final ChatUtils chatUtils,
+      final Map<InetAddress, Instant> bannedUsers) {
+    try {
+      final String[] parts = commandLine.split("\\s+", 2);
+      if (2 > parts.length) {
+        chatUtils.showSystemMessage(formatCommandList());
+        return;
+      }
+      final String stringIpToUnban = parts[1].trim();
+      final InetAddress ipToUnban = InetAddress.getByName(stringIpToUnban);
+      if (null != bannedUsers.remove(ipToUnban)) {
+        chatUtils.showSystemMessage(USER + stringIpToUnban + " has been unbanned.");
+      } else {
+        chatUtils.showSystemMessage(USER + stringIpToUnban + " is not banned.");
+      }
+    } catch (final UnknownHostException e) {
+      chatUtils.showSystemMessage("Invalid IP address.");
+    }
+  }
+
+  private void kickCommand(
+      final String commandLine,
+      final ChatUtils chatUtils,
+      final List<Connection> clientConnections) {
+    final String[] parts = commandLine.split("\\s+", 2);
+    if (2 > parts.length) {
+      chatUtils.showSystemMessage(formatCommandList());
+      return;
+    }
+    final String userToKick = parts[1].trim();
+    final Optional<Connection> userConnectionOpt =
+        clientConnections.stream()
+            .filter(conn -> conn.getName().equalsIgnoreCase(userToKick))
+            .findFirst();
+
+    if (userConnectionOpt.isPresent()) {
+      final Connection userConnection = userConnectionOpt.get();
+      final Message kickMessage = new KickMessage(userToKick);
+      broadcastMessageToConnections(kickMessage);
+      userConnection.removeConnection(clientConnections);
+      chatUtils.showSystemMessage(USER + userToKick + " has been kicked.");
+    } else {
+      chatUtils.showSystemMessage(USER + userToKick + IS_NOT_CONNECTED);
+    }
+  }
+
+  private void showUsersCommand(
+      final ChatUtils chatUtils, final List<Connection> clientConnections) {
+    if (clientConnections.isEmpty()) {
+      chatUtils.showSystemMessage("No users are currently connected.");
+    } else {
+      final StringBuilder userList = new StringBuilder("Connected users:\n");
+      for (final Connection connection : clientConnections) {
+        userList.append("- ").append(connection.getName()).append("\n");
+      }
+      chatUtils.showSystemMessage(userList.toString().trim());
+    }
+  }
+
+  private void showBansCommand(
+      final ChatUtils chatUtils, final Map<InetAddress, Instant> bannedUsers) {
+    if (bannedUsers.isEmpty()) {
+      chatUtils.showSystemMessage("No users are currently banned.");
+    } else {
+      final StringBuilder banList = new StringBuilder("Banned users:\n");
+      for (final Entry<InetAddress, Instant> entry : bannedUsers.entrySet()) {
+        final String formattedTime = BanUtils.formatRemaining(entry.getValue());
+        banList
+            .append("- ")
+            .append(entry.getKey().getHostAddress())
+            .append(" | Banned until: ")
+            .append(formattedTime)
+            .append("\n");
+      }
+      chatUtils.showSystemMessage(banList.toString().trim());
     }
   }
 

@@ -2,6 +2,7 @@ package org.gladiator.util.connection;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
 import java.util.stream.Stream;
@@ -64,6 +65,10 @@ public final class Connection implements AutoCloseable {
     return new Connection(name, socketIo, socket, aesKey);
   }
 
+  public InetAddress getIp() {
+    return socket.getInetAddress();
+  }
+
   /**
    * Removes this connection from the list of connections and closes it.
    *
@@ -113,8 +118,8 @@ public final class Connection implements AutoCloseable {
   @Override
   public void close() {
     try {
-      socketIo.close();
       socket.close();
+      socketIo.close();
     } catch (final IOException e) {
       LOGGER.error("Error closing the connection: {}", e, e);
     }
